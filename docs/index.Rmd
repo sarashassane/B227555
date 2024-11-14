@@ -5,33 +5,92 @@ date: "2024-11-01"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE, message=FALSE, warnings=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include=TRUE, message=FALSE, warnings=FALSE)
 ```
 
-## R Markdown
+## Opioid Drug Prescriptions Trends
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+NHS England (2023) has reported that a framework has been implemented in order to "reduce inappropriate prescribing" of opioids due to causing potential harm if interventions are not in place as well as addictive effects. Despite the use of opioid prescriptions being predominantly used for moderate to severe pain management, they are unlikely to be the "most clinically appropriate treatment for patients". This report aims to assess the relationship between opioid drug prescriptions trends, opioid dependence and musculoskeletal pain in Scotland.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-##hello2
+```{r required packages}
+library(tidyverse)
+library(janitor) 
+library(here)
+library(knitr)
+library(kableExtra)
 ```
 
-```{r}
-#please work
-
-```
-## Including Plots
-
-## test
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+Public Health Scotland 'Prescriptions in the Community' data was used, specifically from July 2024. 
+```{r loading presrciption data}
+prescription_data <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/1cb425fc-640c-4b37-9013-f8e97f274085/download/pitc202407.csv") %>% 
+  clean_names()
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+These drugs were selected as they are the most prescribed opioids in the UK, however, there is data that isn't relevant and should be filtered out such as oral solutions, solutions for injection ampoules, linctus sugar free, patches, tramadol prescribed with paracetamol etc. I only want to look at tablets/capsules. The code below will keep data with "tablets/capsules". only.
+```{r filtering opioids}
+opioid_drugs <- c("TRAMADOL", "CODEINE", "BUPRENORPHINE", "OXYCODONE", "MORPHINE")
+
+opioid_data <- prescription_data %>%
+  filter(bnf_item_description != "TRAMADOL 37.5MG / PARACETAMOL 325MG TABLETS") %>% 
+  filter(str_detect(bnf_item_description, paste(opioid_drugs, collapse = "|")), 
+  grepl('TABLETS|CAPSULES', bnf_item_description)) %>% 
+  filter(!is.na(bnf_item_description))
+```
+
+This filtered data was then used in order to generate a summary table. The output below groups the different opioid dosages together in order to make it easier to analyse and evaluate the results. 
+```{r opioid summary table}
+paid_quantity <- opioid_data %>%
+  group_by(bnf_item_description) %>% 
+  summarise(total_paid_quantity = sum(paid_quantity)) %>% 
+  filter(!is.na(bnf_item_description))
+
+sum_opioid <- opioid_data %>% 
+  group_by(bnf_item_description) %>% 
+  summarise(total_count = n()) %>% 
+  filter(!is.na(bnf_item_description)) %>% 
+  group_by(bnf_item_description, total_count) %>% 
+  summarise(proportion = ((total_count/6740)*100))
+
+new_opioid_data <- full_join(paid_quantity, sum_opioid, join_by(bnf_item_description)) %>% 
+  select(bnf_item_description, total_count, proportion, total_paid_quantity)
+
+Tramadol <- colSums(new_opioid_data[10:18,-1])
+Codeine <- colSums(new_opioid_data[4:6,-1])
+Dihydrocodeine <- colSums(new_opioid_data[7:8,-1])
+Buprenorphine <- colSums(new_opioid_data[1:3,-1])
+Morphine <- colSums(new_opioid_data[9,-1])
+
+data_merged <- t(data.frame(Tramadol, Codeine, Dihydrocodeine, Buprenorphine, Morphine, 
+                            stringsAsFactors = FALSE))
+
+opioid_table <- data_merged %>% 
+  kable(col.names = c("Opioid Type",
+                      "Prescription Count",
+                      "Proportion of Prescribed Opioids (%)",
+                      "Total Paid Quantity"),
+        digits = 2,
+        align = "c",
+        caption = "Figure 1: Information on Opioid Data - July 2024 Prescriptions",
+        format.args = list(big.mark = ","),
+        format = 'html') %>%  
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F, 
+                position = "float_right")
+
+
+opioid_table %>% 
+  kable_styling()
+```
+Figure 1 involves looking at the combined raw count of the specified opioids, and subsequently their proportion by percentage, along with their paid quantity sum. 
+
+Tramadol accounts for the majority of prescribed opioids in both proportion and total paid quantity. However, due to the fact that *all* dosages of tramadol were grouped when generating this figure, this likely contributes to the large proportion seen. Dihydrocodeine and codeine account for the second largest majority of total paid quantity and proportion respectively. The proportion of opioids decreases significantly when considering both buprenorphine and morphine, only accounting for 4.68% of the total prescribed opioids.
+
+Following this, it would be interesting to assess differences in opioid prescriptions by health board and age and how this compares to the ages of individuals who have had opioid related hospitalisations using the Public Health Scotland’s Opioid Dependence data. 
+
+# Refrences:
+
+NHS England (2023) ‘Opioid prescriptions cut by almost half a million in four years as NHS continues crackdown,Available at: https://www.england.nhs.uk/2023/03/opioid-prescriptions-cut-by-almost-half-a-million-in-four-years-as-nhs-continues-crackdown/ (Accessed: 12 November 2024)
+
+
+
