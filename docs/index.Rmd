@@ -86,7 +86,7 @@ Figure 1 involves looking at the combined raw count of the specified opioids, an
 
 Tramadol accounts for the majority of prescribed opioids in both proportion and total paid quantity. However, due to the fact that *all* dosages of tramadol were grouped when generating this figure, this likely contributes to the large proportion seen. Dihydrocodeine and codeine account for the second largest majority of total paid quantity and proportion respectively. The proportion of opioids decreases significantly when considering both buprenorphine and morphine, only accounting for 4.68% of the total prescribed opioids.
 
-Following this, it would be interesting to assess differences in opioid prescriptions by health board and age and how this compares to the ages of individuals who have had opioid related hospitalisations using the Public Health Scotland’s Opioid Dependence data. 
+Following this, it would be interesting to assess differences in opioid prescriptions by health board, how this compares to the ages of individuals who have had opioid related hospitalisations using the Public Health Scotland’s Opioid Dependence data and the relationship between opioid prescriptions, health board and individuals presenting with musculoskeletal pain.  
 
 # References:
 
