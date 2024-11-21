@@ -19,6 +19,7 @@ library(janitor)
 library(here)
 library(knitr)
 library(kableExtra)
+library(gt)
 ```
 
 Public Health Scotland 'Prescriptions in the Community' data was used, specifically from July 2024. 
@@ -32,9 +33,9 @@ These drugs were selected as they are the most prescribed opioids in the UK, how
 opioid_drugs <- c("TRAMADOL", "CODEINE", "BUPRENORPHINE", "OXYCODONE", "MORPHINE")
 
 opioid_data <- prescription_data %>%
-  filter(bnf_item_description != "TRAMADOL 37.5MG / PARACETAMOL 325MG TABLETS") %>% 
-  filter(str_detect(bnf_item_description, paste(opioid_drugs, collapse = "|")), 
-  grepl('TABLETS|CAPSULES', bnf_item_description)) %>% 
+  filter(bnf_item_description != "TRAMADOL 37.5MG / PARACETAMOL 325MG TABLETS",
+         str_detect(bnf_item_description, paste(opioid_drugs, collapse = "|")),
+         str_detect(bnf_item_description, "TABLETS|CAPSULES")) %>%
   filter(!is.na(bnf_item_description))
 ```
 
@@ -55,16 +56,19 @@ sum_opioid <- opioid_data %>%
 new_opioid_data <- full_join(paid_quantity, sum_opioid, join_by(bnf_item_description)) %>% 
   select(bnf_item_description, total_count, proportion, total_paid_quantity)
 
-Tramadol <- colSums(new_opioid_data[10:18,-1])
-Codeine <- colSums(new_opioid_data[4:6,-1])
-Dihydrocodeine <- colSums(new_opioid_data[7:8,-1])
-Buprenorphine <- colSums(new_opioid_data[1:3,-1])
-Morphine <- colSums(new_opioid_data[9,-1])
+clean_opioid_data <- new_opioid_data %>% 
+  mutate(opioid_class = case_when(
+    str_detect(bnf_item_description, "TRAMADOL") ~ "Tramadol",
+    str_detect(bnf_item_description, "^CODEINE") ~ "Codeine",
+    str_detect(bnf_item_description, "DIHYDROCODEINE") ~ "Dihydrocodeine",
+    str_detect(bnf_item_description, "BUPRENORPHINE") ~ "Buprenorphine",
+    str_detect(bnf_item_description, "MORPHINE") ~ "Morphine")) %>% 
+  select(opioid_class, total_count:total_paid_quantity) %>% 
+  group_by(opioid_class) %>% 
+  summarise(across(c(total_count, proportion, total_paid_quantity), sum)) %>% 
+  arrange(desc(total_count))
 
-data_merged <- t(data.frame(Tramadol, Codeine, Dihydrocodeine, Buprenorphine, Morphine, 
-                            stringsAsFactors = FALSE))
-
-opioid_table <- data_merged %>% 
+opioid_table <- clean_opioid_data %>% 
   kable(col.names = c("Opioid Type",
                       "Prescription Count",
                       "Proportion of Prescribed Opioids (%)",
@@ -72,21 +76,235 @@ opioid_table <- data_merged %>%
         digits = 2,
         align = "c",
         caption = "Figure 1: Information on Opioid Data - July 2024 Prescriptions",
-        format.args = list(big.mark = ","),
-        format = 'html') %>%  
+        format.args = list(big.mark = ",")) %>%  
   kable_styling(bootstrap_options = "striped", 
                 full_width = F, 
                 position = "float_right")
 
-
-opioid_table %>% 
-  kable_styling()
+opioid_table
 ```
 Figure 1 involves looking at the combined raw count of the specified opioids, and subsequently their proportion by percentage, along with their paid quantity sum. 
 
 Tramadol accounts for the majority of prescribed opioids in both proportion and total paid quantity. However, due to the fact that *all* dosages of tramadol were grouped when generating this figure, this likely contributes to the large proportion seen. Dihydrocodeine and codeine account for the second largest majority of total paid quantity and proportion respectively. The proportion of opioids decreases significantly when considering both buprenorphine and morphine, only accounting for 4.68% of the total prescribed opioids.
 
-Following this, it would be interesting to assess differences in opioid prescriptions by health board, how this compares to the ages of individuals who have had opioid related hospitalisations using the Public Health Scotland’s Opioid Dependence data and the relationship between opioid prescriptions, health board and individuals presenting with musculoskeletal pain.  
+```{r required data for next plot}
+##loading and joining data
+
+health_boards <- read_csv("https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-44f5-b534-d6e17229cc7b/resource/652ff726-e676-4a20-abda-435b98dd7bdc/download/hb14_hb19.csv") %>%
+  clean_names()
+
+opioid_data <- full_join(health_boards, opioid_data, join_by(hb == hbt)) %>% 
+  select(-c(3:5))
+
+population_data <- read_csv("https://s3-eu-west-1.amazonaws.com/statistics.digitalresources.jisc.ac.uk/dkan/files/2022/NRS/UV103/census_2022_UV103_age_Health_Board_Area_2019.csv", 
+    skip = 10) %>% 
+  rename(Spare = "...5",
+         hb_name = "Health Board Area 2019",
+         hb_population = Count) %>% 
+  filter(Age == "All people") %>% 
+  select(hb_name, hb_population) %>% 
+  mutate(hb_name = paste("NHS", hb_name))
+
+population_opioid_data <- full_join(population_data, 
+                                    opioid_data, join_by(hb_name))
+```
+
+```{r opioid prescriptions per head in each health board}
+##generating plot
+
+tramadol_per_head <- population_opioid_data %>% 
+  filter(str_detect(bnf_item_description, "TRAMADOL")) %>%
+  group_by(hb_name) %>% 
+  summarise(tramadol_quantity_per_head = sum(paid_quantity)/mean(hb_population))
+
+codeine_per_head <- population_opioid_data %>%
+  filter(str_detect(bnf_item_description, "^CODEINE")) %>%
+  group_by(hb_name) %>% 
+  summarise(codeine_quantity_per_head = sum(paid_quantity)/mean(hb_population))
+
+dihydrocodeine_per_head <- population_opioid_data %>% 
+  filter(str_detect(bnf_item_description, "DIHYDROCODEINE")) %>% 
+  group_by(hb_name) %>% 
+  summarise(dihydrocodeine_quantity_per_head = sum(paid_quantity)/mean(hb_population))
+
+opioid_per_head <- list(tramadol_per_head, codeine_per_head, dihydrocodeine_per_head)
+
+opioid_per_head_data <- opioid_per_head %>% 
+  reduce(full_join, by='hb_name')
+
+opioid_per_head_long <- opioid_per_head_data %>% 
+  pivot_longer(tramadol_quantity_per_head:dihydrocodeine_quantity_per_head, 
+               names_to = "opioid", values_to = "per_head")
+
+opioid_per_head_chart <- opioid_per_head_long %>% 
+  ggplot(aes(x = hb_name, y = per_head)) +
+  geom_col(aes(fill = opioid)) +
+  coord_flip() +
+  theme_bw() +
+  labs(title = "Prescription of Tramadol/Codeine/Dihydrocodeine Per Person in Each Health Board",
+       x = "Health Board",
+       y = "Quantity Per Head",
+       caption = "Note: 'Tramadol' = 50mg capsules + 100/150/200 (mg) modified release tablets/capsules. 'Codeine' = 15/30/60 (mg) tablets. 'Dihydrocodeine' = 30mg tablets + 60mg modified release tablets" ) +
+  scale_fill_discrete(name = "Opioid Type", 
+                      labels = c("Codeine", "Dihydrocodeine", "Tramadol"),
+                      type = c("#FED976", "#FB6A4A", "#993404")) +
+    theme(plot.caption = element_text(hjust=0))
+
+opioid_per_head_chart
+```
+
+```{r opioid stats in 2015 v 2020}
+# required prescription data
+
+prescription_data2015 <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/49c2048d-a17c-42d0-b088-17332ffbf75d/download/pitc201511.csv") %>% 
+  clean_names() %>% 
+  select(hbt2014, paid_date_month, bnf_item_description, paid_quantity) %>%
+  filter(!is.na(bnf_item_description)) %>% 
+  filter(str_detect(bnf_item_description, paste(opioid_drugs, collapse = "|")),
+         str_detect(bnf_item_description, "TAB|CAP"),
+         !str_detect(bnf_item_description, "PARACET")) %>% 
+  rename(hbt = hbt2014)
+
+prescription_data2020 <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/ab8aa642-2562-4abb-a360-5c5f9e7e349c/download/pitc202011.csv") %>% 
+  clean_names() %>% 
+  select(hbt, paid_date_month, bnf_item_description, paid_quantity) %>%
+  filter(!is.na(bnf_item_description)) %>% 
+  filter(str_detect(bnf_item_description, paste(opioid_drugs, collapse = "|")),
+         str_detect(bnf_item_description, "TAB|CAP"),
+         !str_detect(bnf_item_description, "PARACET"))
+
+opioid_prescriptions_5_years <- bind_rows(prescription_data2015, prescription_data2020) %>% 
+  filter(!is.na(bnf_item_description)) %>% 
+  mutate(year = case_when(
+    str_detect(paid_date_month, "2015") ~ "2015",
+    str_detect(paid_date_month, "2020") ~ "2020")) %>% 
+   mutate(opioid_class = case_when(
+    str_detect(bnf_item_description, "TRAMADOL") ~ "Tramadol",
+    str_detect(bnf_item_description, "^CODEINE") ~ "Codeine",
+    str_detect(bnf_item_description, "DIHYDROCODEINE") ~ "Dihydrocodeine",
+    str_detect(bnf_item_description, "BUPRENORPHINE") ~ "Buprenorphine",
+    str_detect(bnf_item_description, "MORPHINE") ~ "Morphine")) %>% 
+   select(hbt, year, opioid_class, paid_quantity)
+
+opioid_prescriptions_5_years_data <- opioid_prescriptions_5_years %>% 
+  group_by(year, opioid_class) %>%
+  summarise(total_count = n(),
+            sum_paid_quantity = sum(paid_quantity)) %>% 
+  filter(!is.na(opioid_class)) %>% 
+  select(-sum_paid_quantity) %>% 
+  pivot_wider(names_from = year, values_from = total_count) %>% 
+  rename(Category = opioid_class) %>% 
+  arrange(factor(Category, levels = c("Tramadol", "Codeine", "Dihydrocodeine", "Buprenorphine"))) %>% 
+  mutate(Category = 
+           Category %>% 
+           factor() %>% 
+           fct_recode("Total Tramadol Prescriptions" = "Tramadol",
+                      "Total Codeine Prescriptions" = "Codeine",
+                      "Total Dihydrocodeine Prescriptions" = "Dihydrocodeine",
+                      "Total Buprenorphine Prescriptions" = "Buprenorphine"))
+
+# required data
+opioid_dependence_data <- read_csv("https://www.opendata.nhs.scot/dataset/2337c1d2-4e73-4cce-9039-1bce728108b2/resource/ead97aa5-307d-4d30-a048-3118f2f963fb/download/estimated_prevalence_of_opioid_dependence_scotland_data.csv") %>% 
+  clean_names()
+
+opioid_dependence_clean <-  opioid_dependence_data %>% 
+  mutate(opioid_hospitalisations = deaths_unobserved + hospitalisations_unobserved +
+           hospitalisations_cohort_off_oat) %>% 
+  mutate(opioid_deaths = deaths_cohort_on_oat + deaths_cohort_off_oat +
+           hospitalisations_cohort_on_oat) %>% 
+  select(financial_year, age_group, opioid_hospitalisations, opioid_deaths) %>% 
+  group_by(financial_year, age_group) %>% 
+  summarise(across(c(opioid_hospitalisations, opioid_deaths), sum))
+
+opioid_dependence_clean <- opioid_dependence_clean %>% 
+  mutate(financial_year = recode(financial_year, `2014/15` = "2015"),
+         financial_year = recode(financial_year, `2015/16` = "2016"),
+         financial_year = recode(financial_year, `2016/17` = "2017"),
+         financial_year = recode(financial_year, `2017/18` = "2018"),
+         financial_year = recode(financial_year, `2018/19` = "2019"),
+         financial_year = recode(financial_year, `2019/20` = "2020")) %>% 
+  group_by(financial_year) %>% 
+  summarise(across(c(opioid_hospitalisations, opioid_deaths), sum)) %>% 
+  filter(financial_year %in% c(2015, 2020)) %>% 
+  pivot_longer(opioid_hospitalisations:opioid_deaths, 
+               names_to = "Category", values_to = "Count") %>%
+  pivot_wider(names_from = financial_year, values_from = Count) %>% 
+   mutate(Category = 
+           Category %>% 
+           factor() %>% 
+           fct_recode("Total Opioid Related Hospitalisations" = "opioid_hospitalisations",
+                      "Total Opioid Related Deaths" = "opioid_deaths"))
+  
+opioid_change <- bind_rows(opioid_prescriptions_5_years_data, 
+                           opioid_dependence_clean) %>% 
+gt() %>% 
+  tab_header(title = "Opioid Prescriptions and Opioid Related Hospitalisations/Deaths",
+             subtitle = "Comparison Between 2015 and 2020") %>% 
+  tab_spanner(label = "Year", 
+              columns = c(`2015`, `2020`)) %>% 
+  opt_stylize(style = 1, color = "gray") %>% 
+  cols_align(align = "left", 
+             columns = Category) %>% 
+  cols_add(dir = ifelse(`2015` < `2020`, "arrow-up", "arrow-down")) %>% 
+   fmt_icon(
+    columns = dir,
+    fill_color = c("arrow-up" = "green", "arrow-down" = "red")) %>% 
+  cols_label(dir = "")
+
+opioid_change
+
+```
+
+```{r msk hospital referrals and tramadol quantity in each health board}
+# Required data
+
+msk_hospital_referrals_data <- read_csv("https://www.opendata.nhs.scot/dataset/959f2341-ca34-428c-8abb-b925a18fc0c7/resource/8a7cc5e0-d779-4a5a-86f5-d9cb3695f4c5/download/open_data_ahp_msk_referrals_monthly_june2024.csv") %>% 
+  clean_names()
+
+# Data for graph
+
+msk_hospital_referrals <- full_join(health_boards, msk_hospital_referrals_data, join_by(hb == hbt)) %>% 
+  select(-c(3:5)) %>% 
+  select(-c(month, specialty, referral_source, number_of_referrals_qf,
+            referrals_per_one_hundred_thousand_population_qf))
+
+msk_hospital_referrals <- msk_hospital_referrals %>%
+  filter(!hb %in% c("S92000003", "S08000018", "S08000021", "S08000023", "S08000027")) %>% 
+  group_by(hb, hb_name) %>% 
+  summarise(total_referrals = sum(number_of_referrals, na.rm = TRUE))
+
+tramadol_data <- opioid_data %>%
+  filter(bnf_item_description != "TRAMADOL 37.5MG / PARACETAMOL 325MG TABLETS") %>%
+  filter(str_detect(bnf_item_description, "TRAMADOL")) %>% 
+  group_by(hb_name, bnf_item_description) %>% 
+  summarise(total_paid_quantity = sum(paid_quantity)) %>% 
+  arrange(desc(total_paid_quantity))
+
+tramadol_data2 <- tramadol_data %>% 
+  group_by(hb_name) %>% 
+  summarise(tramadol_paid_quantity = sum(total_paid_quantity)) %>% 
+   arrange(desc(tramadol_paid_quantity))
+  
+tramadol_msk_data <- full_join(tramadol_data2, msk_hospital_referrals, join_by(hb_name))
+
+tramadol_msk_data <- tramadol_msk_data %>% 
+  select(hb, hb_name, tramadol_paid_quantity, total_referrals)
+
+tramadol_msk_plot <- tramadol_msk_data %>% 
+  ggplot() +
+  geom_bar(aes(x = hb_name, y = total_referrals), 
+           stat ='identity', fill = "#B72E48", colour = "white") +
+  geom_line(aes(x = hb_name, y = tramadol_paid_quantity),
+            stat = 'identity', group = 1, colour = "#F5A838", size = 1.5) +
+  scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Tramadol Paid Quantity"), ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1, vjust = 1)) +
+  labs(title= "Comparison Between Musculoskeletal Pain Referrals and Tramadol Quantity", 
+       x="Health Board",y="Referrals for Musculoskeletal")
+
+
+tramadol_msk_plot
+```
 
 # References:
 
