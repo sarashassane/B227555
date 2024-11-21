@@ -75,6 +75,7 @@ opioid_table <- clean_opioid_data %>%
 
 opioid_table
 ```
+
 Figure 1 involves looking at the combined raw count of the specified opioids, and subsequently their proportion by percentage, along with their paid quantity sum. 
 
 Tramadol accounts for the majority of prescribed opioids in both proportion and total paid quantity. However, due to the fact that *all* dosages of tramadol were grouped when generating this figure, this likely contributes to the large proportion seen. Dihydrocodeine and codeine account for the second largest majority of total paid quantity and proportion respectively. The proportion of opioids decreases significantly when considering both buprenorphine and morphine, only accounting for 4.68% of the total prescribed opioids.
@@ -268,9 +269,10 @@ tramadol_msk_plot <- tramadol_msk_data %>%
 
 tramadol_msk_plot
 ```
+
 # References:
 
-NHS England (2023) 'Opioid prescriptions cut by almost half a million in four years as NHS continues crackdown' Available at: https://www.england.nhs.uk/2023/03/opioid-prescriptions-cut-by-almost-half-a-million-in-four-years-as-nhs-continues-crackdown/ (Accessed: 12 November 2024)
+NHS England (2023) 'Opioid prescriptions cut by almost half a million in four years as NHS continues crackdown' Available at: https://www.england.nhs.uk/2023/03/opioid-prescriptions-cut-by-almost-half-a-million-in-four-years-as-nhs-continues-crackdown/ (Accessed: 12 November 2024) 
 
 
 
