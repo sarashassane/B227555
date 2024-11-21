@@ -67,15 +67,19 @@ clean_opioid_data <- new_opioid_data %>%
   arrange(desc(total_count))
 
 opioid_table <- clean_opioid_data %>% 
-  kable(col.names = c("Opioid Type", "Prescription Count", "Proportion of Prescribed Opioids (%)", "Total Paid Quantity"),
-        digits = 2, align = "c",
+  kable(col.names = c("Opioid Type", "Prescription Count", "Proportion of Prescribed Opioids (%)", 
+                      "Total Paid Quantity"),
+        digits = 2, 
+        align = "c",
         caption = "Figure 1: Information on Opioid Data - July 2024 Prescriptions",
         format.args = list(big.mark = ",")) %>%  
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "float_right")
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F, 
+                position = "float_right")
 
-opioid_table
+opioid_table %>% 
+  kable_styling()
 ```
-
 Figure 1 involves looking at the combined raw count of the specified opioids, and subsequently their proportion by percentage, along with their paid quantity sum. 
 
 Tramadol accounts for the majority of prescribed opioids in both proportion and total paid quantity. However, due to the fact that *all* dosages of tramadol were grouped when generating this figure, this likely contributes to the large proportion seen. Dihydrocodeine and codeine account for the second largest majority of total paid quantity and proportion respectively. The proportion of opioids decreases significantly when considering both buprenorphine and morphine, only accounting for 4.68% of the total prescribed opioids.
@@ -222,7 +226,7 @@ gt() %>%
 opioid_change
 ```
 
-```{r msk hospital referrals/tramadol quantity per health board, message=FALSE, warnings=FALSE}
+```{r msk hospital referrals/tramadol quantity per health board}
 # Required data
 msk_hospital_referrals_data <- read_csv("https://www.opendata.nhs.scot/dataset/959f2341-ca34-428c-8abb-b925a18fc0c7/resource/8a7cc5e0-d779-4a5a-86f5-d9cb3695f4c5/download/open_data_ahp_msk_referrals_monthly_june2024.csv") %>% 
   clean_names()
