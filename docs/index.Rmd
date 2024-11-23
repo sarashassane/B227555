@@ -20,7 +20,9 @@ library(kableExtra)
 library(gt)
 ```
 
-Public Health Scotland 'Prescriptions in the Community' data was used, specifically from July 2024. 
+# Classification of Opioid Data 
+
+Public Health Scotland's 'Prescriptions in the Community' data was used, specifically from July 2024. 
 ```{r loading presrciption data}
 prescription_data <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/1cb425fc-640c-4b37-9013-f8e97f274085/download/pitc202407.csv") %>% 
   clean_names()
@@ -84,7 +86,10 @@ Figure 1 involves looking at the combined raw count of the specified opioids, an
 
 Tramadol accounts for the majority of prescribed opioids in both proportion and total paid quantity. However, due to the fact that *all* dosages of tramadol were grouped when generating this figure, this likely contributes to the large proportion seen. Dihydrocodeine and codeine account for the second largest majority of total paid quantity and proportion respectively. The proportion of opioids decreases significantly when considering both buprenorphine and morphine, only accounting for 4.68% of the total prescribed opioids.
 
-```{r required data for next plot}
+# Prescribed Opioids Per Person in Each Health Board
+
+NHS Health Board names and corresponding population data was used for this section. The data was sourced from Public Health Scotland's 'Geography Codes and Labels' dataset and Scotland's Census 2022 - UV103/ Health Board Area 2019' from UK Data Service respectively. These datasets were joined with the previously filtered opioid data. 
+```{r required data for figure 2}
 ##loading and joining data
 health_boards <- read_csv("https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-44f5-b534-d6e17229cc7b/resource/652ff726-e676-4a20-abda-435b98dd7bdc/download/hb14_hb19.csv") %>%
   clean_names()
@@ -93,7 +98,7 @@ opioid_data <- full_join(health_boards, opioid_data, join_by(hb == hbt)) %>%
   select(-c(3:5))
 
 population_data <- read_csv("https://s3-eu-west-1.amazonaws.com/statistics.digitalresources.jisc.ac.uk/dkan/files/2022/NRS/UV103/census_2022_UV103_age_Health_Board_Area_2019.csv", skip = 10) %>% 
-  rename(Spare = "...5", hb_name = "Health Board Area 2019", hb_population = Count) %>% 
+  rename(Spare = "...5", hb_name = "Health Board Area 2019", hb_population = Count) %>%
   filter(Age == "All people") %>% 
   select(hb_name, hb_population) %>% 
   mutate(hb_name = paste("NHS", hb_name))
@@ -102,6 +107,7 @@ population_opioid_data <- full_join(population_data,
                                     opioid_data, join_by(hb_name))
 ```
 
+Tramadol, codeine and dihydrocodeine were selected as they comprised the highest proportion of opioids. They were then each filtered separately and, using the population data, had their quantity per head calculated. This data was then joined together by Health Board and made longer in order to plot the stacked bar chart. 
 ```{r opioid prescriptions per head in each health board}
 ##generating plot
 tramadol_per_head <- population_opioid_data %>% 
@@ -127,13 +133,15 @@ opioid_per_head_data <- opioid_per_head %>%
 opioid_per_head_long <- opioid_per_head_data %>% 
   pivot_longer(tramadol_quantity_per_head:dihydrocodeine_quantity_per_head, 
                names_to = "opioid", values_to = "per_head")
+```
 
+```{r opioid prescriptions per head in each health board plot}
 opioid_per_head_chart <- opioid_per_head_long %>% 
   ggplot(aes(x = hb_name, y = per_head)) +
   geom_col(aes(fill = opioid)) +
   coord_flip() +
   theme_bw() +
-  labs(title = "Prescription of Tramadol/Codeine/Dihydrocodeine Per Person in Each Health Board",
+  labs(title = "Figure 2: Prescription of Tramadol/Codeine/Dihydrocodeine Per Person in Each Health Board",
        x = "Health Board",
        y = "Quantity Per Head",
        caption = "Note: 'Tramadol' = 50mg capsules + 100/150/200 (mg) modified release tablets/capsules. 'Codeine' = 15/30/60 (mg) tablets. 'Dihydrocodeine' = 30mg tablets + 60mg modified release tablets" ) +
@@ -144,7 +152,76 @@ opioid_per_head_chart <- opioid_per_head_long %>%
 
 opioid_per_head_chart
 ```
+Figure 2 involves looking at the number of opioids prescribed per head in each health board. NHS Ayrshire and Arran had the overall highest proportion of combined opioids per head at approximately 3.8 per head. In terms of specific opioid class, the highest proportion of tramadol per head was approximately 2.1, with the lowest at approximately 0.6 in NHS Fife and NHS Shetland respectively. The highest proportions of dihydrocodeine and codeine per head, 1.7 at NHS Forth Valley and 1.5 at NHS Orkney respectively, are still notably lower than tramadol. 
 
+Although there is no clear relationship between Health Boards and opioid prescription rates, there is still a large quantity of opioids prescribed overall, suggesting problems either with over-prescriptions from GP practices or prevalence of systemic health problems such as chronic pain, perhaps as a result of lifestyle or work profession. 
+
+# Relationship Between No. of Musculoskeletal Pain Referrals and No. of Tramadol Sales
+
+Following the previous section, I found that it would be interesting to see if there is a relationship between the number of referrals related to musculoskeletal (MSK) pain and the paid quantities of opioids, specifically tramadol as they make up the majority of prescribed opioid. The data for this plot was sourced from Public Health Scotland's 'Allied Health Professionals - Musculoskeletal Waiting Times/ Referrals' dataset. 
+
+This data set was joined with the aforementioned health board data names dataset and filtered for March of 2024, specifically looking at 'referrals per one hundred thousand population' to allow for standardisation of data as well as fair comparisons when analysing. Tramadol was filtered from the opioid dataset from earlier and the paid quantity per health board was summarised. After this, the filtered and summarised data was joined to generate Figure 3. 
+```{r msk hospital referrals/tramadol quantity per health board}
+# Required data
+msk_hospital_referrals_data <- read_csv("https://www.opendata.nhs.scot/dataset/959f2341-ca34-428c-8abb-b925a18fc0c7/resource/8a7cc5e0-d779-4a5a-86f5-d9cb3695f4c5/download/open_data_ahp_msk_referrals_monthly_june2024.csv") %>% 
+  clean_names()
+
+# Data for graph
+msk_hospital_referrals <- full_join(health_boards, msk_hospital_referrals_data, join_by(hb == hbt)) %>% 
+  select(-c(3:5)) %>% 
+  select(-c(specialty, number_of_referrals_qf,
+            referrals_per_one_hundred_thousand_population_qf, number_of_referrals)) %>%
+  filter(referral_source == "All Referral Sources",
+         month == "202403",
+         !is.na(referrals_per_one_hundred_thousand_population),
+         !hb == "S92000003") %>%
+  group_by(hb, hb_name) %>% 
+  summarise(total_referrals_per100k= sum(referrals_per_one_hundred_thousand_population))
+
+tramadol_data <- opioid_data %>%
+  filter(bnf_item_description != "TRAMADOL 37.5MG / PARACETAMOL 325MG TABLETS") %>%
+  filter(str_detect(bnf_item_description, "TRAMADOL")) %>% 
+  group_by(hb_name, bnf_item_description) %>% 
+  summarise(total_paid_quantity = sum(paid_quantity)) %>% 
+  arrange(desc(total_paid_quantity))
+
+tramadol_data2 <- tramadol_data %>% 
+  group_by(hb_name) %>% 
+  summarise(tramadol_paid_quantity = sum(total_paid_quantity)) %>% 
+   arrange(desc(tramadol_paid_quantity))
+  
+tramadol_msk_data <- full_join(tramadol_data2, msk_hospital_referrals, join_by(hb_name))
+
+tramadol_msk_data <- tramadol_msk_data %>% 
+  select(hb, hb_name, tramadol_paid_quantity, total_referrals_per100k)
+```
+
+```{r msk hospital referrals/tramadol quantity per health board plot}
+# Graph data
+tramadol_msk_plot <- tramadol_msk_data %>% 
+  ggplot() +
+   geom_bar(aes(x = hb_name, y = total_referrals_per100k), 
+           stat ='identity', fill = "#B72E48", colour = "white") +
+  geom_line(aes(x = hb_name, y = tramadol_paid_quantity/1000),
+            group = 1, colour = "#F5A838", linewidth = 1.5)+
+  scale_y_continuous(sec.axis = sec_axis(~.*1000, name = "Tramadol Sales")) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) +
+  labs(title= "Figure 3: Comparison Between Musculoskeletal Pain Referrals and Tramadol Sales", 
+       caption = "Note: The MSK pain referral data was filtered to only include March 2024 as it was the most recent month available.",
+       x="Health Board", y="Referrals for Musculoskeletal Pain Per 100,000 Population") + 
+theme(plot.caption = element_text(hjust=0))
+
+tramadol_msk_plot
+```
+The bars in Figure 3 represents referrals per one hundred thousand population in each health board and the line represents total tramadol sales in each health board. There are instances of higher tramadol sales in areas where there are more individuals with MSK pain such as NHS Greater Glasgow and Clyde, NHS Lanarkshire and NHS Fife. 
+
+The regional variation in MSK pain and opioid use is similar to findings of other studies. For example, Todd et al. (2018) found that across England, there are "geographical differences in chronic pain prevalence, pain intensity and opioid utilisation" as well as finding results that indicate the presence of a ‘pain divide’. This is consistent with findings from the 'Scottish Health Survey' report (2022)  which found that among individuals with chronic pain, the prevalence was "higher in the most deprived areas (50%) compared with the least deprived (29%)".
+
+# Opioid Prescriptions and Opioid Dependence Comparison in 2015 v 2020
+Public Health Scotland's 'Estimated Prevalence of Opioid Dependence in Scotland' data was used for this section, specifically information regarding opioid related hospitalisations and deaths. Public Health Scotland's 'Prescriptions in the Community' data was also used, but from November in the years 2015 and 2020. These years were selected as 2020 was the most recent year in the opioid dependency dataset and for the sake of comparing changes over 5 years. 
+
+The 'Prescriptions in the Community' data was filtered the same way as the first section, with the 2015 and 2020 data joined after filtering. Using the data dictionary for the opioid dependency, hospitalisation and mortality data was identified and combined together, also sectioned for the years 2015 and 2020 for comparison. 
 ```{r opioid stats in 2015 v 2020}
 # required prescription data
 
@@ -166,14 +243,14 @@ prescription_data2020 <- read_csv("https://www.opendata.nhs.scot/dataset/8439398
          !str_detect(bnf_item_description, "PARACET"))
 
 opioid_prescriptions_5_years <- bind_rows(prescription_data2015, prescription_data2020) %>% 
-  filter(!is.na(bnf_item_description)) %>% 
   mutate(year = case_when(str_detect(paid_date_month, "2015") ~ "2015",
                           str_detect(paid_date_month, "2020") ~ "2020")) %>% 
-   mutate(opioid_class = case_when(str_detect(bnf_item_description, "TRAMADOL") ~ "Tramadol",
-                                   str_detect(bnf_item_description, "^CODEINE") ~ "Codeine",
-                                   str_detect(bnf_item_description, "DIHYDROCODEINE") ~ "Dihydrocodeine",
-                                   str_detect(bnf_item_description, "BUPRENORPHINE") ~ "Buprenorphine",
-                                   str_detect(bnf_item_description, "MORPHINE") ~ "Morphine")) %>%
+   mutate(opioid_class = case_when(
+     str_detect(bnf_item_description, "TRAMADOL") ~ "Tramadol",
+     str_detect(bnf_item_description, "^CODEINE") ~ "Codeine",
+     str_detect(bnf_item_description, "DIHYDROCODEINE") ~ "Dihydrocodeine",
+     str_detect(bnf_item_description, "BUPRENORPHINE") ~ "Buprenorphine",
+     str_detect(bnf_item_description, "MORPHINE") ~ "Morphine")) %>%
   select(hbt, year, opioid_class, paid_quantity)
 
 opioid_prescriptions_5_years_data <- opioid_prescriptions_5_years %>% 
@@ -209,12 +286,13 @@ opioid_dependence_clean <- opioid_dependence_clean %>%
   pivot_longer(opioid_hospitalisations:opioid_deaths, names_to = "Category", values_to = "Count") %>%
   pivot_wider(names_from = financial_year, values_from = Count) %>% 
    mutate(Category = Category %>% factor() %>% 
-           fct_recode("Total Opioid Related Hospitalisations" = "opioid_hospitalisations",
+           fct_recode("Total Opioid Related Hospitalisations" =
+                        "opioid_hospitalisations",
                       "Total Opioid Related Deaths" = "opioid_deaths"))
 
 opioid_change <- bind_rows(opioid_prescriptions_5_years_data, opioid_dependence_clean) %>% 
 gt() %>% 
-  tab_header(title = "Opioid Prescriptions and Opioid Related Hospitalisations/Deaths",
+  tab_header(title = "Figure 4: Opioid Prescriptions and Opioid Related Hospitalisations/Deaths",
              subtitle = "Comparison Between 2015 and 2020") %>% 
   tab_spanner(label = "Year", columns = c(`2015`, `2020`)) %>% 
   opt_stylize(style = 1, color = "gray") %>% 
@@ -225,58 +303,15 @@ gt() %>%
 
 opioid_change
 ```
+As seen in Figure 4, codeine and buprenorphine prescriptions increased by 2.7% and 89.8% respectively, while tramadol and dihydrocodeine prescriptions decreased  by 8.0% and 15.2% respectively. Overall, opioid count decreased from a count of 7503 in 2015 to a count of 7200 in 2020, marking a decrease of approximately 4%. This decrease could have been a result of the pandemic in that there may have been reduced opioid prescriptions overall or even difficulty in terms of accessing prescriptions. 
 
-```{r msk hospital referrals/tramadol quantity per health board}
-# Required data
-msk_hospital_referrals_data <- read_csv("https://www.opendata.nhs.scot/dataset/959f2341-ca34-428c-8abb-b925a18fc0c7/resource/8a7cc5e0-d779-4a5a-86f5-d9cb3695f4c5/download/open_data_ahp_msk_referrals_monthly_june2024.csv") %>% 
-  clean_names()
-
-# Data for graph
-msk_hospital_referrals <- full_join(health_boards, msk_hospital_referrals_data, join_by(hb == hbt)) %>% 
-  select(-c(3:5)) %>% 
-  select(-c(month, specialty, referral_source, number_of_referrals_qf,
-            referrals_per_one_hundred_thousand_population_qf))
-
-msk_hospital_referrals <- msk_hospital_referrals %>%
-  filter(!hb %in% c("S92000003", "S08000018", "S08000021", "S08000023", "S08000027")) %>% 
-  group_by(hb, hb_name) %>% 
-  summarise(total_referrals = sum(number_of_referrals, na.rm = TRUE))
-
-tramadol_data <- opioid_data %>%
-  filter(bnf_item_description != "TRAMADOL 37.5MG / PARACETAMOL 325MG TABLETS") %>%
-  filter(str_detect(bnf_item_description, "TRAMADOL")) %>% 
-  group_by(hb_name, bnf_item_description) %>% 
-  summarise(total_paid_quantity = sum(paid_quantity)) %>% 
-  arrange(desc(total_paid_quantity))
-
-tramadol_data2 <- tramadol_data %>% 
-  group_by(hb_name) %>% 
-  summarise(tramadol_paid_quantity = sum(total_paid_quantity)) %>% 
-   arrange(desc(tramadol_paid_quantity))
-  
-tramadol_msk_data <- full_join(tramadol_data2, msk_hospital_referrals, join_by(hb_name))
-
-tramadol_msk_data <- tramadol_msk_data %>% 
-  select(hb, hb_name, tramadol_paid_quantity, total_referrals)
-
-tramadol_msk_plot <- tramadol_msk_data %>% 
-  ggplot() +
-  geom_bar(aes(x = hb_name, y = total_referrals), 
-           stat ='identity', fill = "#B72E48", colour = "white") +
-  geom_line(aes(x = hb_name, y = tramadol_paid_quantity),
-            stat = 'identity', group = 1, colour = "#F5A838", size = 1.5) +
-  scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Tramadol Paid Quantity"), ) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 25, hjust = 1, vjust = 1)) +
-  labs(title= "Comparison Between Musculoskeletal Pain Referrals and Tramadol Quantity", 
-       x="Health Board",y="Referrals for Musculoskeletal")
-
-tramadol_msk_plot
-```
+Despite the overall decrease in opioid count, interestingly during the same time period, both opioid related hospitalisations and deaths had a significantly large increase at 43.5% and 109% respectively. This suggests that there is unlikely to be a relationship between the number of opioid prescribed and
+opioid related hospitalisations and deaths or that it is difficult to ascertain due to the effect of the pandemic. It would be interesting to compare changes after 2020 if more recent opioid dependency data was made available.  
 
 # References:
 
 NHS England (2023) 'Opioid prescriptions cut by almost half a million in four years as NHS continues crackdown' Available at: https://www.england.nhs.uk/2023/03/opioid-prescriptions-cut-by-almost-half-a-million-in-four-years-as-nhs-continues-crackdown/ (Accessed: 12 November 2024) 
 
+Scottish Government (2023) 'The Scottish Health Survey 2022 – volume 1: main report' Available at: https://www.gov.scot/publications/scottish-health-survey-2022-volume-1-main-report/pages/9/ (Accessed: 22 November 2024)
 
-
+Todd A, Akhter N, Cairns J, et al. (2018) 'The Pain Divide: a cross-sectional analysis of chronic pain prevalence, pain intensity and opioid utilisation in England' BMJ Open, 8(e023391). Available at: https://doi.org/10.1136/bmjopen-2018-023391 (Accessed: 22 November 2024)
