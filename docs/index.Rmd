@@ -8,15 +8,16 @@ output: html_document
 <style type="text/css">
 
 body, td {
-   font-size: 12px;
+   font-size: 14px;
 }
 code.r{
-  font-size: 10px;
+  font-size: 12px;
 }
 pre {
-  font-size: 10px
+  font-size: 12px
 }
 </style>
+
 
 ```{r setup, include=FALSE, message=FALSE, warnings=FALSE}
 knitr::opts_chunk$set(echo = TRUE, include=TRUE, message=FALSE, warnings=FALSE)
@@ -227,6 +228,7 @@ tramadol_msk_plot <- tramadol_msk_data %>%
 theme(plot.caption = element_text(hjust=0))
 tramadol_msk_plot
 ```
+
 The bars in Figure 3 represents referrals per one hundred thousand population in each health board and the line represents total tramadol sales in each health board. There are instances of higher tramadol sales in areas where there are more individuals with MSK pain such as NHS Greater Glasgow and Clyde, NHS Lanarkshire and NHS Fife. 
 
 The regional variation in MSK pain and opioid use is similar to findings of other studies. For example, Todd et al. (2018) found that across England, there are "geographical differences in chronic pain prevalence, pain intensity and opioid utilisation" as well as finding results that indicate the presence of a ‘pain divide’. This is consistent with findings from the 'Scottish Health Survey' report (2022)  which found that among individuals with chronic pain, the prevalence was "higher in the most deprived areas (50%) compared with the least deprived (29%)".
