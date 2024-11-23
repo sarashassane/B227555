@@ -152,6 +152,7 @@ opioid_per_head_chart <- opioid_per_head_long %>%
 
 opioid_per_head_chart
 ```
+
 Figure 2 involves looking at the number of opioids prescribed per head in each health board. NHS Ayrshire and Arran had the overall highest proportion of combined opioids per head at approximately 3.8 per head. In terms of specific opioid class, the highest proportion of tramadol per head was approximately 2.1, with the lowest at approximately 0.6 in NHS Fife and NHS Shetland respectively. The highest proportions of dihydrocodeine and codeine per head, 1.7 at NHS Forth Valley and 1.5 at NHS Orkney respectively, are still notably lower than tramadol. 
 
 Although there is no clear relationship between Health Boards and opioid prescription rates, there is still a large quantity of opioids prescribed overall, suggesting problems either with over-prescriptions from GP practices or prevalence of systemic health problems such as chronic pain, perhaps as a result of lifestyle or work profession. 
