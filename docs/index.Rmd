@@ -7,7 +7,7 @@ output: html_document
 ```{r setup, include=FALSE, message=FALSE, warnings=FALSE}
 knitr::opts_chunk$set(echo = TRUE, include=TRUE, message=FALSE, warnings=FALSE)
 ```
-## Opioid Drug Prescriptions Trends
+### Opioid Drug Prescriptions Trends
 
 NHS England (2023) has reported that a framework has been implemented in order to "reduce inappropriate prescribing" of opioids due to causing potential harm if interventions are not in place as well as addictive effects. Despite the use of opioid prescriptions being predominantly used for moderate to severe pain management, they are unlikely to be the "most clinically appropriate treatment for patients". This report aims to assess the relationship between opioid drug prescriptions trends, opioid dependence and musculoskeletal pain in Scotland. 
 
@@ -20,7 +20,7 @@ library(kableExtra)
 library(gt)
 ```
 
-# Classification of Opioid Data 
+### Classification of Opioid Data 
 
 Public Health Scotland's 'Prescriptions in the Community' data was used, specifically from July 2024. 
 ```{r loading presrciption data}
@@ -86,7 +86,7 @@ Figure 1 involves looking at the combined raw count of the specified opioids, an
 
 Tramadol accounts for the majority of prescribed opioids in both proportion and total paid quantity. However, due to the fact that *all* dosages of tramadol were grouped when generating this figure, this likely contributes to the large proportion seen. Dihydrocodeine and codeine account for the second largest majority of total paid quantity and proportion respectively. The proportion of opioids decreases significantly when considering both buprenorphine and morphine, only accounting for 4.68% of the total prescribed opioids.
 
-# Prescribed Opioids Per Person in Each Health Board
+### Prescribed Opioids Per Person in Each Health Board
 
 NHS Health Board names and corresponding population data was used for this section. The data was sourced from Public Health Scotland's 'Geography Codes and Labels' dataset and Scotland's Census 2022 - UV103/ Health Board Area 2019' from UK Data Service respectively. These datasets were joined with the previously filtered opioid data. 
 ```{r required data for figure 2}
@@ -144,7 +144,7 @@ opioid_per_head_chart <- opioid_per_head_long %>%
   labs(title = "Figure 2: Prescription of Tramadol/Codeine/Dihydrocodeine Per Person in Each Health Board",
        x = "Health Board",
        y = "Quantity Per Head",
-       caption = "Note: 'Tramadol' = 50mg capsules + 100/150/200 (mg) modified release tablets/capsules. 'Codeine' = 15/30/60 (mg) tablets. 'Dihydrocodeine' = 30mg tablets + 60mg modified release tablets" ) +
+       caption = "Note: 'Tramadol' = 50/100/150/200 (mg). 'Codeine' = 15/30/60 (mg). 'Dihydrocodeine' = 30/60 (mg)") +
   scale_fill_discrete(name = "Opioid Type", 
                       labels = c("Codeine", "Dihydrocodeine", "Tramadol"),
                       type = c("#FED976", "#FB6A4A", "#993404")) +
@@ -157,7 +157,7 @@ Figure 2 involves looking at the number of opioids prescribed per head in each h
 
 Although there is no clear relationship between Health Boards and opioid prescription rates, there is still a large quantity of opioids prescribed overall, suggesting problems either with over-prescriptions from GP practices or prevalence of systemic health problems such as chronic pain, perhaps as a result of lifestyle or work profession. 
 
-# Relationship Between No. of Musculoskeletal Pain Referrals and No. of Tramadol Sales
+### Relationship Between No. of Musculoskeletal Pain Referrals and No. of Tramadol Sales
 
 Following the previous section, I found that it would be interesting to see if there is a relationship between the number of referrals related to musculoskeletal (MSK) pain and the paid quantities of opioids, specifically tramadol as they make up the majority of prescribed opioid. The data for this plot was sourced from Public Health Scotland's 'Allied Health Professionals - Musculoskeletal Waiting Times/ Referrals' dataset. 
 
@@ -219,10 +219,10 @@ The bars in Figure 3 represents referrals per one hundred thousand population in
 
 The regional variation in MSK pain and opioid use is similar to findings of other studies. For example, Todd et al. (2018) found that across England, there are "geographical differences in chronic pain prevalence, pain intensity and opioid utilisation" as well as finding results that indicate the presence of a ‘pain divide’. This is consistent with findings from the 'Scottish Health Survey' report (2022)  which found that among individuals with chronic pain, the prevalence was "higher in the most deprived areas (50%) compared with the least deprived (29%)".
 
-# Opioid Prescriptions and Opioid Dependence Comparison in 2015 v 2020
+### Opioid Prescriptions and Opioid Dependence Comparison in 2015 v 2020
 Public Health Scotland's 'Estimated Prevalence of Opioid Dependence in Scotland' data was used for this section, specifically information regarding opioid related hospitalisations and deaths. Public Health Scotland's 'Prescriptions in the Community' data was also used, but from November in the years 2015 and 2020. These years were selected as 2020 was the most recent year in the opioid dependency dataset and for the sake of comparing changes over 5 years. 
 
-The 'Prescriptions in the Community' data was filtered the same way as the first section, with the 2015 and 2020 data joined after filtering. Using the data dictionary for the opioid dependency, hospitalisation and mortality data was identified and combined together, also sectioned for the years 2015 and 2020 for comparison. 
+The 'Prescriptions in the Community' data was filtered the same way as the first section, with the 2015 and 2020 data joined after filtering. Using the data dictionary for the opioid dependency, hospitalisation and mortality data was identified and combined together, also sectioned for the years 2015 and 2020 for comparison.
 ```{r opioid stats in 2015 v 2020}
 # required prescription data
 
@@ -307,9 +307,11 @@ opioid_change
 As seen in Figure 4, codeine and buprenorphine prescriptions increased by 2.7% and 89.8% respectively, while tramadol and dihydrocodeine prescriptions decreased  by 8.0% and 15.2% respectively. Overall, opioid count decreased from a count of 7503 in 2015 to a count of 7200 in 2020, marking a decrease of approximately 4%. This decrease could have been a result of the pandemic in that there may have been reduced opioid prescriptions overall or even difficulty in terms of accessing prescriptions. 
 
 Despite the overall decrease in opioid count, interestingly during the same time period, both opioid related hospitalisations and deaths had a significantly large increase at 43.5% and 109% respectively. This suggests that there is unlikely to be a relationship between the number of opioid prescribed and
-opioid related hospitalisations and deaths or that it is difficult to ascertain due to the effect of the pandemic. It would be interesting to compare changes after 2020 if more recent opioid dependency data was made available.  
+opioid related hospitalisations and deaths or that it is difficult to ascertain due to the effect of the pandemic. It would be interesting to compare changes after 2020 if more recent opioid dependency data was made available. 
 
-# References:
+Note: No generative AI was used in this assessment. 
+
+### References:
 
 NHS England (2023) 'Opioid prescriptions cut by almost half a million in four years as NHS continues crackdown' Available at: https://www.england.nhs.uk/2023/03/opioid-prescriptions-cut-by-almost-half-a-million-in-four-years-as-nhs-continues-crackdown/ (Accessed: 12 November 2024) 
 
