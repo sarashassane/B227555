@@ -149,7 +149,6 @@ opioid_per_head_chart <- opioid_per_head_long %>%
                       labels = c("Codeine", "Dihydrocodeine", "Tramadol"),
                       type = c("#FED976", "#FB6A4A", "#993404")) +
     theme(plot.caption = element_text(hjust=0))
-
 opioid_per_head_chart
 ```
 
@@ -212,7 +211,6 @@ tramadol_msk_plot <- tramadol_msk_data %>%
        caption = "Note: The MSK pain referral data was filtered to only include March 2024 as it was the most recent month available.",
        x="Health Board", y="Referrals for Musculoskeletal Pain Per 100,000 Population") + 
 theme(plot.caption = element_text(hjust=0))
-
 tramadol_msk_plot
 ```
 The bars in Figure 3 represents referrals per one hundred thousand population in each health board and the line represents total tramadol sales in each health board. There are instances of higher tramadol sales in areas where there are more individuals with MSK pain such as NHS Greater Glasgow and Clyde, NHS Lanarkshire and NHS Fife. 
@@ -242,9 +240,7 @@ prescription_data2020 <- read_csv("https://www.opendata.nhs.scot/dataset/8439398
   filter(str_detect(bnf_item_description, paste(opioid_drugs, collapse = "|")),
          str_detect(bnf_item_description, "TAB|CAP"),
          !str_detect(bnf_item_description, "PARACET"))
-```
 
-```{r opioid stats in 2015 v 2020 - wrangling prescription code}
 opioid_prescriptions_5_years <- bind_rows(prescription_data2015, prescription_data2020) %>% 
   mutate(year = case_when(str_detect(paid_date_month, "2015") ~ "2015",
                           str_detect(paid_date_month, "2020") ~ "2020")) %>% 
@@ -269,9 +265,7 @@ opioid_prescriptions_5_years_data <- opioid_prescriptions_5_years %>%
                       "Total Codeine Prescriptions" = "Codeine",
                       "Total Dihydrocodeine Prescriptions" = "Dihydrocodeine",
                       "Total Buprenorphine Prescriptions" = "Buprenorphine"))
-```
 
-```{r opioid stats in 2015 v 2020 - opioid dependency code}
 # required data
 opioid_dependence_data <- read_csv("https://www.opendata.nhs.scot/dataset/2337c1d2-4e73-4cce-9039-1bce728108b2/resource/ead97aa5-307d-4d30-a048-3118f2f963fb/download/estimated_prevalence_of_opioid_dependence_scotland_data.csv") %>% 
   clean_names()
@@ -295,9 +289,7 @@ opioid_dependence_clean <- opioid_dependence_clean %>%
            fct_recode("Total Opioid Related Hospitalisations" =
                         "opioid_hospitalisations",
                       "Total Opioid Related Deaths" = "opioid_deaths"))
-```
 
-```{r figure 4 plot}
 opioid_change <- bind_rows(opioid_prescriptions_5_years_data, opioid_dependence_clean) %>% 
 gt() %>% 
   tab_header(title = "Figure 4: Opioid Prescriptions and Opioid Related Hospitalisations/Deaths",
@@ -308,7 +300,6 @@ gt() %>%
   cols_add(dir = ifelse(`2015` < `2020`, "arrow-up", "arrow-down")) %>% 
    fmt_icon(columns = dir, fill_color = c("arrow-up" = "green", "arrow-down" = "red")) %>% 
   cols_label(dir = "")
-
 opioid_change
 ```
 As seen in Figure 4, codeine and buprenorphine prescriptions increased by 2.7% and 89.8% respectively, while tramadol and dihydrocodeine prescriptions decreased  by 8.0% and 15.2% respectively. Overall, opioid count decreased from a count of 7503 in 2015 to a count of 7200 in 2020, marking a decrease of approximately 4%. This decrease could have been a result of the pandemic in that there may have been reduced opioid prescriptions overall or even difficulty in terms of accessing prescriptions. 
