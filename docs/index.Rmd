@@ -234,7 +234,7 @@ tramadol_msk_plot <- tramadol_msk_data %>%
   scale_y_continuous(sec.axis = sec_axis(~.*1000, name = "Tramadol Sales")) +
   #allows a second y-axis to be plot and as the bar and line graph have very different scales, it is adjusted here to display both
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 40, hjust = 1, vjust = 1)) +
+  theme(axis.text.x = element_text(angle = 55, hjust = 1, vjust = 1)) +
   #allows the health board names not to overlap as this plot cannot be flipped
   labs(title= "Figure 3: Comparison Between MSK Pain Referrals and Tramadol Sales", 
        caption = "Note: The MSK pain referral data was filtered to only include March 2024 as it was the most recent month available.",
