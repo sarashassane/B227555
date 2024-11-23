@@ -25,14 +25,13 @@ knitr::opts_chunk$set(echo = TRUE, include=TRUE, message=FALSE, warnings=FALSE)
 ### Opioid Drug Prescriptions Trends
 
 NHS England (2023) has reported that a framework has been implemented in order to "reduce inappropriate prescribing" of opioids due to causing potential harm if interventions are not in place as well as addictive effects. Despite the use of opioid prescriptions being predominantly used for moderate to severe pain management, they are unlikely to be the "most clinically appropriate treatment for patients". This report aims to assess the relationship between opioid drug prescriptions trends, opioid dependence and musculoskeletal pain in Scotland. 
-
 ```{r required packages}
 library(tidyverse)
-library(janitor) 
+library(janitor) #makes data easier to use by tidying names
 library(here)
 library(knitr)
-library(kableExtra)
-library(gt)
+library(kableExtra) #for additional kable table editing choices
+library(gt) #in order to generate a gt() table
 ```
 
 ### Classification of Opioid Data 
@@ -46,53 +45,61 @@ prescription_data <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14
 These drugs were selected as they are the most prescribed opioids in the UK, however, there is data that isn't relevant and should be filtered out such as oral solutions, solutions for injection ampoules, linctus sugar free, patches, tramadol prescribed with paracetamol etc. I only want to look at tablets/capsules. The code below will keep data with "tablets/capsules". only.
 ```{r filtering opioids}
 opioid_drugs <- c("TRAMADOL", "CODEINE", "BUPRENORPHINE", "OXYCODONE", "MORPHINE")
+# A vector was created to specify the opioids that will be looked at for this assessment. 
 
 opioid_data <- prescription_data %>%
   filter(bnf_item_description != "TRAMADOL 37.5MG / PARACETAMOL 325MG TABLETS",
+         #filtering out unnecessary paracetamol data
          str_detect(bnf_item_description, paste(opioid_drugs, collapse = "|")),
+         #the collapse function condenses the vector made earlier
          str_detect(bnf_item_description, "TABLETS|CAPSULES")) %>%
-  filter(!is.na(bnf_item_description))
+  filter(!is.na(bnf_item_description)) #filtering out NA values
 ```
 
 This filtered data was then used in order to generate a summary table. The output below groups the different opioid dosages together in order to make it easier to analyse and evaluate the results. 
 ```{r opioid summary table}
+# the code below will group the rows with the same name in the drug column and add their paid quantity values together
 paid_quantity <- opioid_data %>%
   group_by(bnf_item_description) %>% 
-  summarise(total_paid_quantity = sum(paid_quantity)) %>% 
-  filter(!is.na(bnf_item_description))
+  summarise(total_paid_quantity = sum(paid_quantity))
 
+# the code below will group the rows with the same name in the drug column, count the number of instances and calculate the proportion over the total number of observations in the 'opioid_data' dataset
 sum_opioid <- opioid_data %>% 
   group_by(bnf_item_description) %>% 
-  summarise(total_count = n()) %>% 
-  filter(!is.na(bnf_item_description)) %>% 
+  summarise(total_count = n()) %>%
   group_by(bnf_item_description, total_count) %>% 
   summarise(proportion = ((total_count/6740)*100))
 
 new_opioid_data <- full_join(paid_quantity, sum_opioid, join_by(bnf_item_description)) %>% 
-  select(bnf_item_description, total_count, proportion, total_paid_quantity)
-
-clean_opioid_data <- new_opioid_data %>% 
+  select(bnf_item_description, total_count, proportion, total_paid_quantity) %>% 
+# the filtered data was then joined by the drug column and the select function was used to reorder the columns into a particular order
   mutate(opioid_class = case_when(
     str_detect(bnf_item_description, "TRAMADOL") ~ "Tramadol",
     str_detect(bnf_item_description, "^CODEINE") ~ "Codeine",
     str_detect(bnf_item_description, "DIHYDROCODEINE") ~ "Dihydrocodeine",
     str_detect(bnf_item_description, "BUPRENORPHINE") ~ "Buprenorphine",
     str_detect(bnf_item_description, "MORPHINE") ~ "Morphine")) %>% 
+  # this was done in order to group all of the dosages with the same name, e.g. all of the tramadol dosages together into one row etc.
   select(opioid_class, total_count:total_paid_quantity) %>% 
+  # the select function was used to reorder the columns into a particular order
   group_by(opioid_class) %>% 
   summarise(across(c(total_count, proportion, total_paid_quantity), sum)) %>% 
-  arrange(desc(total_count))
+  # adding all of the values for the corresponding opioid
+  arrange(desc(total_count)) #arranges the data by the highest values
 
-opioid_table <- clean_opioid_data %>% 
+opioid_table <- new_opioid_data %>% 
   kable(col.names = c("Opioid Type", "Prescription Count", "Proportion of Prescribed Opioids (%)", 
                       "Total Paid Quantity"),
         digits = 2, 
+        # rounds the columns with decimals to 2 decimal places
         align = "c",
         caption = "Figure 1: Information on Opioid Data - July 2024 Prescriptions",
-        format.args = list(big.mark = ",")) %>%  
+        format.args = list(big.mark = ",")) %>%
+  # places commas every three digits to make larger numbers easier to read
   kable_styling(bootstrap_options = "striped", 
                 full_width = F, 
-                position = "float_right")
+                position = "float_right") 
+# makes the table position to the right and wraps text
 
 opioid_table %>% 
   kable_styling()
@@ -111,12 +118,13 @@ health_boards <- read_csv("https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-4
 
 opioid_data <- full_join(health_boards, opioid_data, join_by(hb == hbt)) %>% 
   select(-c(3:5))
+# the opioid data is now joined with the health board data,, with the 'hb_date_enacted', 'hb_date_archived' and 'country' columns removed as they are not required
 
 population_data <- read_csv("https://s3-eu-west-1.amazonaws.com/statistics.digitalresources.jisc.ac.uk/dkan/files/2022/NRS/UV103/census_2022_UV103_age_Health_Board_Area_2019.csv", skip = 10) %>% 
   rename(Spare = "...5", hb_name = "Health Board Area 2019", hb_population = Count) %>%
   filter(Age == "All people") %>% 
   select(hb_name, hb_population) %>% 
-  mutate(hb_name = paste("NHS", hb_name))
+  mutate(hb_name = paste("NHS", hb_name)) #this includes the word 'NHS' before every 'hb_name' row
 
 population_opioid_data <- full_join(population_data, 
                                     opioid_data, join_by(hb_name))
@@ -124,7 +132,7 @@ population_opioid_data <- full_join(population_data,
 
 Tramadol, codeine and dihydrocodeine were selected as they comprised the highest proportion of opioids. They were then each filtered separately and, using the population data, had their quantity per head calculated. This data was then joined together by Health Board and made longer in order to plot the stacked bar chart. 
 ```{r opioid prescriptions per head in each health board}
-##generating plot
+# the quantity per head was calculated by adding the paid quantity of the opioid together and dividing it by the corresponding health board population to get the 'per head' data
 tramadol_per_head <- population_opioid_data %>% 
   filter(str_detect(bnf_item_description, "TRAMADOL")) %>%
   group_by(hb_name) %>% 
@@ -141,20 +149,23 @@ dihydrocodeine_per_head <- population_opioid_data %>%
   summarise(dihydrocodeine_quantity_per_head = sum(paid_quantity)/mean(hb_population))
 
 opioid_per_head <- list(tramadol_per_head, codeine_per_head, dihydrocodeine_per_head)
+# a list was created in order to reduce and join the data in the next step
 
 opioid_per_head_data <- opioid_per_head %>% 
-  reduce(full_join, by='hb_name')
-
-opioid_per_head_long <- opioid_per_head_data %>% 
+  reduce(full_join, by='hb_name') %>% 
+# the reduce full join is done to simultaneously merge data frames in a list
   pivot_longer(tramadol_quantity_per_head:dihydrocodeine_quantity_per_head, 
                names_to = "opioid", values_to = "per_head")
+# pivot longer was required to create a column with the opioids sperate to the values in order to plot figure 2
 ```
 
 ```{r opioid prescriptions per head in each health board plot}
-opioid_per_head_chart <- opioid_per_head_long %>% 
+opioid_per_head_chart <- opioid_per_head_data %>% 
   ggplot(aes(x = hb_name, y = per_head)) +
   geom_col(aes(fill = opioid)) +
+  #this makes the bar chart stacked
   coord_flip() +
+  # as the healthboard names are quite long and overlap
   theme_bw() +
   labs(title = "Figure 2: Prescription of Tramadol/Codeine/Dihydrocodeine Per Person in Each Health Board",
        x = "Health Board",
@@ -162,8 +173,10 @@ opioid_per_head_chart <- opioid_per_head_long %>%
        caption = "'Tramadol' = 50/100/150/200(mg). 'Codeine' = 15/30/60(mg). 'Dihydrocodeine' = 30/60(mg)") +
   scale_fill_discrete(name = "Opioid Type", 
                       labels = c("Codeine", "Dihydrocodeine", "Tramadol"),
+                      #changes the names of the figure legend title and variables
                       type = c("#FED976", "#FB6A4A", "#993404")) +
     theme(plot.caption = element_text(hjust=0))
+# moves the caption to the left-hand side
 opioid_per_head_chart
 ```
 
@@ -181,34 +194,32 @@ This data set was joined with the aforementioned health board data names dataset
 msk_hospital_referrals_data <- read_csv("https://www.opendata.nhs.scot/dataset/959f2341-ca34-428c-8abb-b925a18fc0c7/resource/8a7cc5e0-d779-4a5a-86f5-d9cb3695f4c5/download/open_data_ahp_msk_referrals_monthly_june2024.csv") %>% 
   clean_names()
 
-# Data for graph
 msk_hospital_referrals <- full_join(health_boards, msk_hospital_referrals_data, join_by(hb == hbt)) %>% 
+  # joined with data to see health board names
   select(-c(3:5)) %>% 
   select(-c(specialty, number_of_referrals_qf,
             referrals_per_one_hundred_thousand_population_qf, number_of_referrals)) %>%
   filter(referral_source == "All Referral Sources",
-         month == "202403",
+         month == "202403", #most recent month was chosen
          !is.na(referrals_per_one_hundred_thousand_population),
-         !hb == "S92000003") %>%
+         !hb == "S92000003") %>% #code corresponds to 'Scotland', isn't relevant
   group_by(hb, hb_name) %>% 
-  summarise(total_referrals_per100k= sum(referrals_per_one_hundred_thousand_population))
+  summarise(total_referrals_per100k= sum(referrals_per_one_hundred_thousand_population)) #this column was used to keep referrals and population standardised for comparison
 
 tramadol_data <- opioid_data %>%
-  filter(bnf_item_description != "TRAMADOL 37.5MG / PARACETAMOL 325MG TABLETS") %>%
   filter(str_detect(bnf_item_description, "TRAMADOL")) %>% 
   group_by(hb_name, bnf_item_description) %>% 
   summarise(total_paid_quantity = sum(paid_quantity)) %>% 
-  arrange(desc(total_paid_quantity))
-
-tramadol_data2 <- tramadol_data %>% 
+  #tramadol was filtered and then the total paid quantity was calculated for each dosage
+  arrange(desc(total_paid_quantity)) %>% 
   group_by(hb_name) %>% 
-  summarise(tramadol_paid_quantity = sum(total_paid_quantity)) %>% 
-   arrange(desc(tramadol_paid_quantity))
+  summarise(tramadol_paid_quantity = sum(total_paid_quantity)) %>%
+  #the tramadol is now grouped together with the paid quantities appropriately added, with the corresponding health board 
+  arrange(desc(tramadol_paid_quantity))
   
-tramadol_msk_data <- full_join(tramadol_data2, msk_hospital_referrals, join_by(hb_name))
-
-tramadol_msk_data <- tramadol_msk_data %>% 
-  select(hb, hb_name, tramadol_paid_quantity, total_referrals_per100k)
+tramadol_msk_data <- full_join(tramadol_data, msk_hospital_referrals, join_by(hb_name)) %>% 
+select(hb, hb_name, tramadol_paid_quantity, total_referrals_per100k)
+#opioid and referral data was then joined and selected for a specific column order
 ```
 
 ```{r msk hospital referrals/tramadol quantity per health board plot}
@@ -218,14 +229,18 @@ tramadol_msk_plot <- tramadol_msk_data %>%
    geom_bar(aes(x = hb_name, y = total_referrals_per100k), 
            stat ='identity', fill = "#B72E48", colour = "white") +
   geom_line(aes(x = hb_name, y = tramadol_paid_quantity/1000),
-            group = 1, colour = "#F5A838", linewidth = 1.5)+
+            group = 1, colour = "#F5A838", linewidth = 1.5) +
+  #in order for 'scale_y_continuous' to work, the y-axis in the line graph must also be adjusted to be plot accurately
   scale_y_continuous(sec.axis = sec_axis(~.*1000, name = "Tramadol Sales")) +
+  #allows a second y-axis to be plot and as the bar and line graph have very different scales, it is adjusted here to display both
   theme_bw() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) +
+  #allows the health board names not to overlap as this plot cannot be flipped
   labs(title= "Figure 3: Comparison Between Musculoskeletal Pain Referrals and Tramadol Sales", 
        caption = "Note: The MSK pain referral data was filtered to only include March 2024 as it was the most recent month available.",
-       x="Health Board", y="Referrals for Musculoskeletal Pain Per 100,000 Population") + 
+       x="Health Board", y="Referrals for MSK Pain Per 100,000 Population") + 
 theme(plot.caption = element_text(hjust=0))
+#moves the caption to the left-hand side
 tramadol_msk_plot
 ```
 
@@ -239,7 +254,6 @@ Public Health Scotland's 'Estimated Prevalence of Opioid Dependence in Scotland'
 The 'Prescriptions in the Community' data was filtered the same way as the first section, with the 2015 and 2020 data joined after filtering. Using the data dictionary for the opioid dependency, hospitalisation and mortality data was identified and combined together, also sectioned for the years 2015 and 2020 for comparison.
 ```{r opioid stats in 2015 v 2020 - loading prescription data}
 # required prescription data
-
 prescription_data2015 <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/49c2048d-a17c-42d0-b088-17332ffbf75d/download/pitc201511.csv") %>% 
   clean_names() %>% 
   select(hbt2014, paid_date_month, bnf_item_description, paid_quantity) %>%
@@ -247,7 +261,7 @@ prescription_data2015 <- read_csv("https://www.opendata.nhs.scot/dataset/8439398
   filter(str_detect(bnf_item_description, paste(opioid_drugs, collapse = "|")),
          str_detect(bnf_item_description, "TAB|CAP"),
          !str_detect(bnf_item_description, "PARACET")) %>% 
-  rename(hbt = hbt2014)
+  rename(hbt = hbt2014) #column is renamed so that 'bind_rows' can work later
 
 prescription_data2020 <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/ab8aa642-2562-4abb-a360-5c5f9e7e349c/download/pitc202011.csv") %>% 
   clean_names() %>% 
@@ -260,6 +274,7 @@ prescription_data2020 <- read_csv("https://www.opendata.nhs.scot/dataset/8439398
 opioid_prescriptions_5_years <- bind_rows(prescription_data2015, prescription_data2020) %>% 
   mutate(year = case_when(str_detect(paid_date_month, "2015") ~ "2015",
                           str_detect(paid_date_month, "2020") ~ "2020")) %>% 
+  #years changed so it is displayed clearly in figure 4
    mutate(opioid_class = case_when(
      str_detect(bnf_item_description, "TRAMADOL") ~ "Tramadol",
      str_detect(bnf_item_description, "^CODEINE") ~ "Codeine",
@@ -267,35 +282,38 @@ opioid_prescriptions_5_years <- bind_rows(prescription_data2015, prescription_da
      str_detect(bnf_item_description, "BUPRENORPHINE") ~ "Buprenorphine",
      str_detect(bnf_item_description, "MORPHINE") ~ "Morphine")) %>%
   select(hbt, year, opioid_class, paid_quantity)
+#'paid_data_month' and 'bnf_item_description' were not included as they are not relevant here
 
 opioid_prescriptions_5_years_data <- opioid_prescriptions_5_years %>% 
   group_by(year, opioid_class) %>%
-  summarise(total_count = n(), sum_paid_quantity = sum(paid_quantity)) %>% 
-  filter(!is.na(opioid_class)) %>% 
-  select(-sum_paid_quantity) %>% 
+  summarise(total_count = n()) %>% 
+  filter(!is.na(opioid_class)) %>%
   pivot_wider(names_from = year, values_from = total_count) %>% 
   rename(Category = opioid_class) %>% 
   arrange(factor(Category, levels = c("Tramadol", "Codeine", "Dihydrocodeine", "Buprenorphine"))) %>% 
+  #changed to dispaly in specific order
   mutate(Category = Category %>% factor() %>% 
            fct_recode("Total Tramadol Prescriptions" = "Tramadol", 
                       "Total Codeine Prescriptions" = "Codeine",
                       "Total Dihydrocodeine Prescriptions" = "Dihydrocodeine",
                       "Total Buprenorphine Prescriptions" = "Buprenorphine"))
+#this was done as gt() tables display the data as is, therefore it had to be changed here
 
 # required data
 opioid_dependence_data <- read_csv("https://www.opendata.nhs.scot/dataset/2337c1d2-4e73-4cce-9039-1bce728108b2/resource/ead97aa5-307d-4d30-a048-3118f2f963fb/download/estimated_prevalence_of_opioid_dependence_scotland_data.csv") %>% 
   clean_names()
 
 opioid_dependence_clean <-  opioid_dependence_data %>% 
-  mutate(opioid_hospitalisations = deaths_unobserved + hospitalisations_unobserved + hospitalisations_cohort_off_oat) %>% 
+  mutate(opioid_hospitalisations = deaths_unobserved + hospitalisations_unobserved + hospitalisations_cohort_off_oat) %>%
+  #data dictionary was used in order to understand what columns should be combined
   mutate(opioid_deaths = deaths_cohort_on_oat + deaths_cohort_off_oat + hospitalisations_cohort_on_oat) %>% 
+  #data dictionary was used in order to understand what columns should be combined
   select(financial_year, age_group, opioid_hospitalisations, opioid_deaths) %>% 
   group_by(financial_year, age_group) %>% 
-  summarise(across(c(opioid_hospitalisations, opioid_deaths), sum))
-
-opioid_dependence_clean <- opioid_dependence_clean %>% 
+  summarise(across(c(opioid_hospitalisations, opioid_deaths), sum)) %>% 
   mutate(financial_year = recode(financial_year, `2014/15` = "2015"),
-         financial_year = recode(financial_year, `2019/20` = "2020")) %>% 
+         financial_year = recode(financial_year, `2019/20` = "2020")) %>%
+  #years were changed to allow for comparison with opioid data
   group_by(financial_year) %>% 
   summarise(across(c(opioid_hospitalisations, opioid_deaths), sum)) %>% 
   filter(financial_year %in% c(2015, 2020)) %>% 
@@ -305,17 +323,21 @@ opioid_dependence_clean <- opioid_dependence_clean %>%
            fct_recode("Total Opioid Related Hospitalisations" =
                         "opioid_hospitalisations",
                       "Total Opioid Related Deaths" = "opioid_deaths"))
+#both pivot longer and wider were required to format the data in a way that was required to display figure 4
 
 opioid_change <- bind_rows(opioid_prescriptions_5_years_data, opioid_dependence_clean) %>% 
+  #data was joined together
 gt() %>% 
   tab_header(title = "Figure 4: Opioid Prescriptions and Opioid Related Hospitalisations/Deaths",
              subtitle = "Comparison Between 2015 and 2020") %>% 
   tab_spanner(label = "Year", columns = c(`2015`, `2020`)) %>% 
   opt_stylize(style = 1, color = "gray") %>% 
   cols_align(align = "left", columns = Category) %>% 
-  cols_add(dir = ifelse(`2015` < `2020`, "arrow-up", "arrow-down")) %>% 
-   fmt_icon(columns = dir, fill_color = c("arrow-up" = "green", "arrow-down" = "red")) %>% 
-  cols_label(dir = "")
+  cols_add(arrows = ifelse(`2015` < `2020`, "arrow-up", "arrow-down")) %>% 
+  #gt() icons were used in order to show arrows that highlight the changes in data, this is specifying the conditions for when the arrow should point up or down
+   fmt_icon(columns = arrows, fill_color = c("arrow-up" = "green", "arrow-down" = "red")) %>% 
+  #this colours the arrows for better visualisation
+  cols_label(arrows = "") #this keeps the column name blank so that it does not appear as 'arrow' in the table
 opioid_change
 ```
 As seen in Figure 4, codeine and buprenorphine prescriptions increased by 2.7% and 89.8% respectively, while tramadol and dihydrocodeine prescriptions decreased  by 8.0% and 15.2% respectively. Overall, opioid count decreased from a count of 7503 in 2015 to a count of 7200 in 2020, marking a decrease of approximately 4%. This decrease could have been a result of the pandemic in that there may have been reduced opioid prescriptions overall or even difficulty in terms of accessing prescriptions. 
