@@ -4,6 +4,20 @@ author: "Sara"
 date: "2024-11-01"
 output: html_document
 ---
+
+<style type="text/css">
+
+body, td {
+   font-size: 12px;
+}
+code.r{
+  font-size: 10px;
+}
+pre {
+  font-size: 10px
+}
+</style>
+
 ```{r setup, include=FALSE, message=FALSE, warnings=FALSE}
 knitr::opts_chunk$set(echo = TRUE, include=TRUE, message=FALSE, warnings=FALSE)
 ```
@@ -144,7 +158,7 @@ opioid_per_head_chart <- opioid_per_head_long %>%
   labs(title = "Figure 2: Prescription of Tramadol/Codeine/Dihydrocodeine Per Person in Each Health Board",
        x = "Health Board",
        y = "Quantity Per Head",
-       caption = "Note: 'Tramadol' = 50/100/150/200 (mg). 'Codeine' = 15/30/60 (mg). 'Dihydrocodeine' = 30/60 (mg)") +
+       caption = "'Tramadol' = 50/100/150/200(mg). 'Codeine' = 15/30/60(mg). 'Dihydrocodeine' = 30/60(mg)") +
   scale_fill_discrete(name = "Opioid Type", 
                       labels = c("Codeine", "Dihydrocodeine", "Tramadol"),
                       type = c("#FED976", "#FB6A4A", "#993404")) +
