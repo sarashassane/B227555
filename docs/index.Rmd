@@ -222,7 +222,7 @@ select(hb, hb_name, tramadol_paid_quantity, total_referrals_per100k)
 #opioid and referral data was then joined and selected for a specific column order
 ```
 
-```{r msk hospital referrals/tramadol quantity per health board plot}
+```{r msk referrals/tramadol per health board plot, fig.align = 'center'}
 # Graph data
 tramadol_msk_plot <- tramadol_msk_data %>% 
   ggplot() +
