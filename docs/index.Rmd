@@ -22,6 +22,8 @@ pre {
 ```{r setup, include=FALSE, message=FALSE, warnings=FALSE}
 knitr::opts_chunk$set(echo = TRUE, include=TRUE, message=FALSE, warnings=FALSE)
 ```
+Note: No generative AI was used in this assessment. 
+
 ### Opioid Drug Prescriptions Trends
 
 NHS England (2023) has reported that a framework has been implemented in order to "reduce inappropriate prescribing" of opioids due to causing potential harm if interventions are not in place as well as addictive effects. Despite the use of opioid prescriptions being predominantly used for moderate to severe pain management, they are unlikely to be the "most clinically appropriate treatment for patients". This report aims to assess the relationship between opioid drug prescriptions trends, opioid dependence and musculoskeletal pain in Scotland. 
@@ -186,7 +188,7 @@ Although there is no clear relationship between Health Boards and opioid prescri
 
 ### Relationship Between No. of Musculoskeletal Pain Referrals and No. of Tramadol Sales
 
-Following the previous section, I found that it would be interesting to see if there is a relationship between the number of referrals related to musculoskeletal (MSK) pain and the paid quantities of opioids, specifically tramadol as they make up the majority of prescribed opioid. The data for this plot was sourced from Public Health Scotland's 'Allied Health Professionals - Musculoskeletal Waiting Times/ Referrals' dataset. 
+Following the previous section, I found that it would be interesting to see if there is a relationship between the number of referrals related to musculoskeletal (MSK) pain and the paid quantities of opioids, specifically tramadol as they make up the majority of the prescribed opioids. The data for this plot was sourced from Public Health Scotland's 'Allied Health Professionals - Musculoskeletal Waiting Times/ Referrals' dataset. 
 
 This data set was joined with the aforementioned health board data names dataset and filtered for March of 2024, specifically looking at 'referrals per one hundred thousand population' to allow for standardisation of data as well as fair comparisons when analysing. Tramadol was filtered from the opioid dataset from earlier and the paid quantity per health board was summarised. After this, the filtered and summarised data was joined to generate Figure 3. 
 ```{r msk hospital referrals/tramadol quantity per health board}
@@ -346,8 +348,6 @@ opioid_change
 In summary, total opioid sales decreased by approximately 2.1% overall, due to the large effect tramadol has on overall sales. When considering the individual opioids, all sales increased, except for tramadol. The decrease in 2020 could have been as a result of the pandemic in that there may have been reduced tramadol prescriptions overall or even difficulty in terms of accessing these prescriptions. As seen in Figure 4, tramadol decreased by 16.8% and codeine, dihydrocodeine and buprenorphine increased by 50.5%, 12.5% and 383.5% respectively. 
 
 Interestingly, both opioid related hospitalisations and deaths also had a significantly large increase at 43.5% and 109% respectively. However, due to the fact that overall opioid sales decreased when comparing 2015 with 2020, this suggests that there is unlikely to be a relationship between the number of opioid prescribed and opioid related hospitalisations and deaths that the relationship is difficult to validate due to the effect of the pandemic. It would be interesting to compare changes after 2020 if more recent opioid dependency data was made available. 
-
-Note: No generative AI was used in this assessment. 
 
 ### References:
 
