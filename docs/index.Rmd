@@ -159,7 +159,7 @@ opioid_per_head_data <- opioid_per_head %>%
 # pivot longer was required to create a column with the opioids sperate to the values in order to plot figure 2
 ```
 
-```{r opioid prescriptions per head in each health board plot}
+```{r opioid prescriptions per head in each health board plot, fig.align = 'center'}
 opioid_per_head_chart <- opioid_per_head_data %>% 
   ggplot(aes(x = hb_name, y = per_head)) +
   geom_col(aes(fill = opioid)) +
