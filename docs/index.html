@@ -1004,17 +1004,17 @@ opioid_prescriptions_5_years &lt;- bind_rows(prescription_data2015, prescription
 
 opioid_prescriptions_5_years_data &lt;- opioid_prescriptions_5_years %&gt;% 
   group_by(year, opioid_class) %&gt;%
-  summarise(total_count = n()) %&gt;% 
+  summarise(total_paid_quantity = sum(paid_quantity)) %&gt;% 
   filter(!is.na(opioid_class)) %&gt;%
-  pivot_wider(names_from = year, values_from = total_count) %&gt;% 
+  pivot_wider(names_from = year, values_from = total_paid_quantity) %&gt;% 
   rename(Category = opioid_class) %&gt;% 
   arrange(factor(Category, levels = c(&quot;Tramadol&quot;, &quot;Codeine&quot;, &quot;Dihydrocodeine&quot;, &quot;Buprenorphine&quot;))) %&gt;% 
   #changed to dispaly in specific order
   mutate(Category = Category %&gt;% factor() %&gt;% 
-           fct_recode(&quot;Total Tramadol Prescriptions&quot; = &quot;Tramadol&quot;, 
-                      &quot;Total Codeine Prescriptions&quot; = &quot;Codeine&quot;,
-                      &quot;Total Dihydrocodeine Prescriptions&quot; = &quot;Dihydrocodeine&quot;,
-                      &quot;Total Buprenorphine Prescriptions&quot; = &quot;Buprenorphine&quot;))
+           fct_recode(&quot;Tramadol Sales&quot; = &quot;Tramadol&quot;, 
+                      &quot;Codeine Sales&quot; = &quot;Codeine&quot;,
+                      &quot;Dihydrocodeine Sales&quot; = &quot;Dihydrocodeine&quot;,
+                      &quot;Buprenorphine Sales&quot; = &quot;Buprenorphine&quot;))
 #this was done as gt() tables display the data as is, therefore it had to be changed here
 
 # required data
@@ -1055,22 +1055,24 @@ gt() %&gt;%
   #gt() icons were used in order to show arrows that highlight the changes in data, this is specifying the conditions for when the arrow should point up or down
    fmt_icon(columns = arrows, fill_color = c(&quot;arrow-up&quot; = &quot;green&quot;, &quot;arrow-down&quot; = &quot;red&quot;)) %&gt;% 
   #this colours the arrows for better visualisation
-  cols_label(arrows = &quot;&quot;) #this keeps the column name blank so that it does not appear as &#39;arrow&#39; in the table
+  cols_label(arrows = &quot;&quot;) %&gt;% #this keeps the column name blank so that it does not appear as &#39;arrow&#39; in the table  
+  fmt_number(sep_mark = &quot;,&quot;, decimals = 0) #makes the large numbers easy to read and decimals kept appearing therefore I set the decimals to equal 0 so they wouldn&#39;t
+
 opioid_change</code></pre>
-<div id="yinppomgig" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#yinppomgig table {
+<div id="ysjqkmxato" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ysjqkmxato table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#yinppomgig thead, #yinppomgig tbody, #yinppomgig tfoot, #yinppomgig tr, #yinppomgig td, #yinppomgig th {
+#ysjqkmxato thead, #ysjqkmxato tbody, #ysjqkmxato tfoot, #ysjqkmxato tr, #ysjqkmxato td, #ysjqkmxato th {
 border-style: none;
 }
-#yinppomgig p {
+#ysjqkmxato p {
 margin: 0;
 padding: 0;
 }
-#yinppomgig .gt_table {
+#ysjqkmxato .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -1095,11 +1097,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#yinppomgig .gt_caption {
+#ysjqkmxato .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#yinppomgig .gt_title {
+#ysjqkmxato .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -1110,7 +1112,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#yinppomgig .gt_subtitle {
+#ysjqkmxato .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -1121,7 +1123,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#yinppomgig .gt_heading {
+#ysjqkmxato .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -1132,12 +1134,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#yinppomgig .gt_bottom_border {
+#ysjqkmxato .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #5F5F5F;
 }
-#yinppomgig .gt_col_headings {
+#ysjqkmxato .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #5F5F5F;
@@ -1151,7 +1153,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#yinppomgig .gt_col_heading {
+#ysjqkmxato .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -1170,7 +1172,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#yinppomgig .gt_column_spanner_outer {
+#ysjqkmxato .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -1181,13 +1183,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#yinppomgig .gt_column_spanner_outer:first-child {
+#ysjqkmxato .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#yinppomgig .gt_column_spanner_outer:last-child {
+#ysjqkmxato .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#yinppomgig .gt_column_spanner {
+#ysjqkmxato .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #5F5F5F;
@@ -1198,10 +1200,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#yinppomgig .gt_spanner_row {
+#ysjqkmxato .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#yinppomgig .gt_group_heading {
+#ysjqkmxato .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -1226,7 +1228,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#yinppomgig .gt_empty_group_heading {
+#ysjqkmxato .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -1240,13 +1242,13 @@ border-bottom-width: 2px;
 border-bottom-color: #5F5F5F;
 vertical-align: middle;
 }
-#yinppomgig .gt_from_md > :first-child {
+#ysjqkmxato .gt_from_md > :first-child {
 margin-top: 0;
 }
-#yinppomgig .gt_from_md > :last-child {
+#ysjqkmxato .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#yinppomgig .gt_row {
+#ysjqkmxato .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -1264,7 +1266,7 @@ border-right-color: #D5D5D5;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#yinppomgig .gt_stub {
+#ysjqkmxato .gt_stub {
 color: #FFFFFF;
 background-color: #5F5F5F;
 font-size: 100%;
@@ -1276,7 +1278,7 @@ border-right-color: #5F5F5F;
 padding-left: 5px;
 padding-right: 5px;
 }
-#yinppomgig .gt_stub_row_group {
+#ysjqkmxato .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -1289,13 +1291,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#yinppomgig .gt_row_group_first td {
+#ysjqkmxato .gt_row_group_first td {
 border-top-width: 2px;
 }
-#yinppomgig .gt_row_group_first th {
+#ysjqkmxato .gt_row_group_first th {
 border-top-width: 2px;
 }
-#yinppomgig .gt_summary_row {
+#ysjqkmxato .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -1304,14 +1306,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#yinppomgig .gt_first_summary_row {
+#ysjqkmxato .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #5F5F5F;
 }
-#yinppomgig .gt_first_summary_row.thick {
+#ysjqkmxato .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#yinppomgig .gt_last_summary_row {
+#ysjqkmxato .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -1320,7 +1322,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #5F5F5F;
 }
-#yinppomgig .gt_grand_summary_row {
+#ysjqkmxato .gt_grand_summary_row {
 color: #333333;
 background-color: #D5D5D5;
 text-transform: inherit;
@@ -1329,7 +1331,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#yinppomgig .gt_first_grand_summary_row {
+#ysjqkmxato .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -1338,7 +1340,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #5F5F5F;
 }
-#yinppomgig .gt_last_grand_summary_row_top {
+#ysjqkmxato .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -1347,10 +1349,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #5F5F5F;
 }
-#yinppomgig .gt_striped {
+#ysjqkmxato .gt_striped {
 background-color: #F4F4F4;
 }
-#yinppomgig .gt_table_body {
+#ysjqkmxato .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #5F5F5F;
@@ -1358,7 +1360,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #5F5F5F;
 }
-#yinppomgig .gt_footnotes {
+#ysjqkmxato .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -1371,7 +1373,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#yinppomgig .gt_footnote {
+#ysjqkmxato .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -1379,7 +1381,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#yinppomgig .gt_sourcenotes {
+#ysjqkmxato .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -1392,64 +1394,64 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#yinppomgig .gt_sourcenote {
+#ysjqkmxato .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#yinppomgig .gt_left {
+#ysjqkmxato .gt_left {
 text-align: left;
 }
-#yinppomgig .gt_center {
+#ysjqkmxato .gt_center {
 text-align: center;
 }
-#yinppomgig .gt_right {
+#ysjqkmxato .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#yinppomgig .gt_font_normal {
+#ysjqkmxato .gt_font_normal {
 font-weight: normal;
 }
-#yinppomgig .gt_font_bold {
+#ysjqkmxato .gt_font_bold {
 font-weight: bold;
 }
-#yinppomgig .gt_font_italic {
+#ysjqkmxato .gt_font_italic {
 font-style: italic;
 }
-#yinppomgig .gt_super {
+#ysjqkmxato .gt_super {
 font-size: 65%;
 }
-#yinppomgig .gt_footnote_marks {
+#ysjqkmxato .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#yinppomgig .gt_asterisk {
+#ysjqkmxato .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#yinppomgig .gt_indent_1 {
+#ysjqkmxato .gt_indent_1 {
 text-indent: 5px;
 }
-#yinppomgig .gt_indent_2 {
+#ysjqkmxato .gt_indent_2 {
 text-indent: 10px;
 }
-#yinppomgig .gt_indent_3 {
+#ysjqkmxato .gt_indent_3 {
 text-indent: 15px;
 }
-#yinppomgig .gt_indent_4 {
+#ysjqkmxato .gt_indent_4 {
 text-indent: 20px;
 }
-#yinppomgig .gt_indent_5 {
+#ysjqkmxato .gt_indent_5 {
 text-indent: 25px;
 }
-#yinppomgig .katex-display {
+#ysjqkmxato .katex-display {
 display: inline-flex !important;
 margin-bottom: 0.75em !important;
 }
-#yinppomgig div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ysjqkmxato div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
 height: 0px !important;
 }
 </style>
@@ -1474,21 +1476,21 @@ height: 0px !important;
     </tr>
   </thead>
   <tbody class="gt_table_body">
-    <tr><td headers="Category" class="gt_row gt_left">Total Tramadol Prescriptions</td>
-<td headers="2015" class="gt_row gt_right">3875</td>
-<td headers="2020" class="gt_row gt_right">3566</td>
+    <tr><td headers="Category" class="gt_row gt_left">Tramadol Sales</td>
+<td headers="2015" class="gt_row gt_right">8,775,116</td>
+<td headers="2020" class="gt_row gt_right">7,300,975</td>
 <td headers="arrows" class="gt_row gt_left"><span style="white-space:nowrap;"><svg aria-label="Arrow Down" role="img" viewBox="0 0 384 512" style="height:1em;width:0.75em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:red;overflow:visible;position:relative;"><title>Arrow Down</title><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" /></svg></span></td></tr>
-    <tr><td headers="Category" class="gt_row gt_left gt_striped">Total Codeine Prescriptions</td>
-<td headers="2015" class="gt_row gt_right gt_striped">1856</td>
-<td headers="2020" class="gt_row gt_right gt_striped">1906</td>
+    <tr><td headers="Category" class="gt_row gt_left gt_striped">Codeine Sales</td>
+<td headers="2015" class="gt_row gt_right gt_striped">1,166,175</td>
+<td headers="2020" class="gt_row gt_right gt_striped">1,754,712</td>
 <td headers="arrows" class="gt_row gt_left gt_striped"><span style="white-space:nowrap;"><svg aria-label="Arrow Up" role="img" viewBox="0 0 384 512" style="height:1em;width:0.75em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:green;overflow:visible;position:relative;"><title>Arrow Up</title><path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z" /></svg></span></td></tr>
-    <tr><td headers="Category" class="gt_row gt_left">Total Dihydrocodeine Prescriptions</td>
-<td headers="2015" class="gt_row gt_right">1557</td>
-<td headers="2020" class="gt_row gt_right">1320</td>
-<td headers="arrows" class="gt_row gt_left"><span style="white-space:nowrap;"><svg aria-label="Arrow Down" role="img" viewBox="0 0 384 512" style="height:1em;width:0.75em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:red;overflow:visible;position:relative;"><title>Arrow Down</title><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" /></svg></span></td></tr>
-    <tr><td headers="Category" class="gt_row gt_left gt_striped">Total Buprenorphine Prescriptions</td>
-<td headers="2015" class="gt_row gt_right gt_striped">215</td>
-<td headers="2020" class="gt_row gt_right gt_striped">408</td>
+    <tr><td headers="Category" class="gt_row gt_left">Dihydrocodeine Sales</td>
+<td headers="2015" class="gt_row gt_right">3,754,520</td>
+<td headers="2020" class="gt_row gt_right">4,223,210</td>
+<td headers="arrows" class="gt_row gt_left"><span style="white-space:nowrap;"><svg aria-label="Arrow Up" role="img" viewBox="0 0 384 512" style="height:1em;width:0.75em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:green;overflow:visible;position:relative;"><title>Arrow Up</title><path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z" /></svg></span></td></tr>
+    <tr><td headers="Category" class="gt_row gt_left gt_striped">Buprenorphine Sales</td>
+<td headers="2015" class="gt_row gt_right gt_striped">33,776</td>
+<td headers="2020" class="gt_row gt_right gt_striped">163,317</td>
 <td headers="arrows" class="gt_row gt_left gt_striped"><span style="white-space:nowrap;"><svg aria-label="Arrow Up" role="img" viewBox="0 0 384 512" style="height:1em;width:0.75em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:green;overflow:visible;position:relative;"><title>Arrow Up</title><path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z" /></svg></span></td></tr>
     <tr><td headers="Category" class="gt_row gt_left">Total Opioid Related Hospitalisations</td>
 <td headers="2015" class="gt_row gt_right">457</td>
@@ -1503,22 +1505,24 @@ height: 0px !important;
   
 </table>
 </div>
-<p>As seen in Figure 4, codeine and buprenorphine prescriptions
-increased by 2.7% and 89.8% respectively, while tramadol and
-dihydrocodeine prescriptions decreased by 8.0% and 15.2% respectively.
-Overall, opioid count decreased from a count of 7503 in 2015 to a count
-of 7200 in 2020, marking a decrease of approximately 4%. This decrease
-could have been a result of the pandemic in that there may have been
-reduced opioid prescriptions overall or even difficulty in terms of
-accessing prescriptions.</p>
-<p>Despite the overall decrease in opioid count, interestingly during
-the same time period, both opioid related hospitalisations and deaths
-had a significantly large increase at 43.5% and 109% respectively. This
-suggests that there is unlikely to be a relationship between the number
-of opioid prescribed and opioid related hospitalisations and deaths or
-that it is difficult to ascertain due to the effect of the pandemic. It
-would be interesting to compare changes after 2020 if more recent opioid
-dependency data was made available.</p>
+<p>In summary, total opioid sales decreased by approximately 2.1%
+overall, due to the large effect tramadol has on overall sales. When
+considering the individual opioids, all sales increased, except for
+tramadol. The decrease in 2020 could have been as a result of the
+pandemic in that there may have been reduced tramadol prescriptions
+overall or even difficulty in terms of accessing these prescriptions. As
+seen in Figure 4, tramadol decreased by 16.8% and codeine,
+dihydrocodeine and buprenorphine increased by 50.5%, 12.5% and 383.5%
+respectively.</p>
+<p>Interestingly, both opioid related hospitalisations and deaths also
+had a significantly large increase at 43.5% and 109% respectively.
+However, due to the fact that overall opioid sales decreased when
+comparing 2015 with 2020, this suggests that there is unlikely to be a
+relationship between the number of opioid prescribed and opioid related
+hospitalisations and deaths that the relationship is difficult to
+validate due to the effect of the pandemic. It would be interesting to
+compare changes after 2020 if more recent opioid dependency data was
+made available.</p>
 <p>Note: No generative AI was used in this assessment.</p>
 </div>
 <div id="references" class="section level3">

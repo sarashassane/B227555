@@ -252,7 +252,7 @@ The regional variation in MSK pain and opioid use is similar to findings of othe
 Public Health Scotland's 'Estimated Prevalence of Opioid Dependence in Scotland' data was used for this section, specifically information regarding opioid related hospitalisations and deaths. Public Health Scotland's 'Prescriptions in the Community' data was also used, but from November in the years 2015 and 2020. These years were selected as 2020 was the most recent year in the opioid dependency dataset and for the sake of comparing changes over 5 years. 
 
 The 'Prescriptions in the Community' data was filtered the same way as the first section, with the 2015 and 2020 data joined after filtering. Using the data dictionary for the opioid dependency, hospitalisation and mortality data was identified and combined together, also sectioned for the years 2015 and 2020 for comparison.
-```{r opioid stats in 2015 v 2020 - loading prescription data}
+```{r opioid stats in 2015 v 2020}
 # required prescription data
 prescription_data2015 <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/49c2048d-a17c-42d0-b088-17332ffbf75d/download/pitc201511.csv") %>% 
   clean_names() %>% 
@@ -286,17 +286,17 @@ opioid_prescriptions_5_years <- bind_rows(prescription_data2015, prescription_da
 
 opioid_prescriptions_5_years_data <- opioid_prescriptions_5_years %>% 
   group_by(year, opioid_class) %>%
-  summarise(total_count = n()) %>% 
+  summarise(total_paid_quantity = sum(paid_quantity)) %>% 
   filter(!is.na(opioid_class)) %>%
-  pivot_wider(names_from = year, values_from = total_count) %>% 
+  pivot_wider(names_from = year, values_from = total_paid_quantity) %>% 
   rename(Category = opioid_class) %>% 
   arrange(factor(Category, levels = c("Tramadol", "Codeine", "Dihydrocodeine", "Buprenorphine"))) %>% 
   #changed to dispaly in specific order
   mutate(Category = Category %>% factor() %>% 
-           fct_recode("Total Tramadol Prescriptions" = "Tramadol", 
-                      "Total Codeine Prescriptions" = "Codeine",
-                      "Total Dihydrocodeine Prescriptions" = "Dihydrocodeine",
-                      "Total Buprenorphine Prescriptions" = "Buprenorphine"))
+           fct_recode("Tramadol Sales" = "Tramadol", 
+                      "Codeine Sales" = "Codeine",
+                      "Dihydrocodeine Sales" = "Dihydrocodeine",
+                      "Buprenorphine Sales" = "Buprenorphine"))
 #this was done as gt() tables display the data as is, therefore it had to be changed here
 
 # required data
@@ -337,13 +337,15 @@ gt() %>%
   #gt() icons were used in order to show arrows that highlight the changes in data, this is specifying the conditions for when the arrow should point up or down
    fmt_icon(columns = arrows, fill_color = c("arrow-up" = "green", "arrow-down" = "red")) %>% 
   #this colours the arrows for better visualisation
-  cols_label(arrows = "") #this keeps the column name blank so that it does not appear as 'arrow' in the table
+  cols_label(arrows = "") %>% #this keeps the column name blank so that it does not appear as 'arrow' in the table  
+  fmt_number(sep_mark = ",", decimals = 0) #makes the large numbers easy to read and decimals kept appearing therefore I set the decimals to equal 0 so they wouldn't
+
 opioid_change
 ```
-As seen in Figure 4, codeine and buprenorphine prescriptions increased by 2.7% and 89.8% respectively, while tramadol and dihydrocodeine prescriptions decreased  by 8.0% and 15.2% respectively. Overall, opioid count decreased from a count of 7503 in 2015 to a count of 7200 in 2020, marking a decrease of approximately 4%. This decrease could have been a result of the pandemic in that there may have been reduced opioid prescriptions overall or even difficulty in terms of accessing prescriptions. 
 
-Despite the overall decrease in opioid count, interestingly during the same time period, both opioid related hospitalisations and deaths had a significantly large increase at 43.5% and 109% respectively. This suggests that there is unlikely to be a relationship between the number of opioid prescribed and
-opioid related hospitalisations and deaths or that it is difficult to ascertain due to the effect of the pandemic. It would be interesting to compare changes after 2020 if more recent opioid dependency data was made available. 
+In summary, total opioid sales decreased by approximately 2.1% overall, due to the large effect tramadol has on overall sales. When considering the individual opioids, all sales increased, except for tramadol. The decrease in 2020 could have been as a result of the pandemic in that there may have been reduced tramadol prescriptions overall or even difficulty in terms of accessing these prescriptions. As seen in Figure 4, tramadol decreased by 16.8% and codeine, dihydrocodeine and buprenorphine increased by 50.5%, 12.5% and 383.5% respectively. 
+
+Interestingly, both opioid related hospitalisations and deaths also had a significantly large increase at 43.5% and 109% respectively. However, due to the fact that overall opioid sales decreased when comparing 2015 with 2020, this suggests that there is unlikely to be a relationship between the number of opioid prescribed and opioid related hospitalisations and deaths that the relationship is difficult to validate due to the effect of the pandemic. It would be interesting to compare changes after 2020 if more recent opioid dependency data was made available. 
 
 Note: No generative AI was used in this assessment. 
 
